@@ -13,7 +13,8 @@ const initialUsers = [
 ];
 
 const state = { 
-  currentUser: JSON.parse(localStorage.getItem('currentUser') || 'null')
+  currentUser: JSON.parse(localStorage.getItem('currentUser') || 'null'),
+  authMode: 'login'
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -66,9 +67,13 @@ function renderAuthSection() {
 
   el.innerHTML = `
     <div class="glass-card p-4 auth-card">
-      <div class="row g-4">
-        <div class="col-lg-6">
-          <h4>Login</h4>
+      <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap mb-4">
+        <h4 class="mb-0">${state.authMode === 'register' ? 'Register' : 'Sign In'}</h4>
+        <button type="button" class="btn btn-outline-light btn-sm" id="toggle-auth-mode">
+          ${state.authMode === 'register' ? 'Sign In' : 'Register'}
+        </button>
+      </div>
+      <div class="${state.authMode === 'register' ? 'd-none' : ''}">
           <div id="login-message"></div>
           <form id="login-form">
             <div class="mb-3">
@@ -79,11 +84,10 @@ function renderAuthSection() {
               <label class="form-label">Password</label>
               <input type="password" class="form-control" id="login-password" required />
             </div>
-            <button type="submit" class="btn btn-primary w-100">Login</button>
+            <button type="submit" class="btn btn-primary w-100">Sign In</button>
           </form>
-        </div>
-        <div class="col-lg-6">
-          <h4>Register</h4>
+      </div>
+      <div class="${state.authMode === 'register' ? '' : 'd-none'}">
           <div id="register-message"></div>
           <form id="register-form">
             <div class="mb-3">
@@ -96,7 +100,6 @@ function renderAuthSection() {
             </div>
             <button type="submit" class="btn btn-outline-light w-100">Register</button>
           </form>
-        </div>
       </div>
       <div id="verify-section" class="mt-4 ${pendingEmail ? '' : 'd-none'}">
         <h5 class="mb-3">Verify your email</h5>
@@ -113,6 +116,10 @@ function renderAuthSection() {
     </div>
   `;
 
+  document.getElementById('toggle-auth-mode')?.addEventListener('click', () => {
+    state.authMode = state.authMode === 'register' ? 'login' : 'register';
+    renderAuthSection();
+  });
   document.getElementById('login-form')?.addEventListener('submit', handleLogin);
   document.getElementById('register-form')?.addEventListener('submit', handleRegister);
   document.getElementById('verify-form')?.addEventListener('submit', handleVerify);
