@@ -194,6 +194,19 @@ async function handleRegister(event) {
     showMessage('login-message', `Account created. Firebase sent a verification link to ${email}. Verify it, then sign in.`, 'success');
   } catch (error) {
     console.error('Firebase registration failed', error);
+    if (error.code === 'auth/email-already-in-use') {
+      try {
+        const firebaseUser = await db.signInWithFirebaseEmail(email, password);
+        if (!firebaseUser.emailVerified) {
+          await db.sendFirebaseVerificationEmail(firebaseUser);
+          await db.signOutFirebaseUser();
+          showMessage('register-message', `This account already exists. Firebase sent a new verification link to ${email}.`, 'warning');
+          return;
+        }
+      } catch (signInError) {
+        console.error('Verification resend failed', signInError);
+      }
+    }
     showMessage('register-message', db.getFirebaseAuthErrorMessage(error), 'danger');
   }
 }
