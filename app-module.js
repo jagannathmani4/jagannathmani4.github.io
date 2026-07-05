@@ -70,7 +70,7 @@ const portfolioDB = {
   initialUsers: [
     {
       email: 'jagannathmani4@gmail.com',
-      password: 'admin123',
+      password: 'Jagannath@2005',
       displayName: 'Jagannath',
       isAdmin: true,
       verified: true,

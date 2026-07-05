@@ -60,14 +60,28 @@
               </div>
             </div>
             <div class="col-lg-6">
-              <div class="hero-panel">
-                <div class="hero-badge">Featured</div>
-                <div class="code-card">
-                  <pre><code>const developer = {
+              <div class="d-grid gap-4">
+                <!-- Image Section -->
+                <div class="hero-panel">
+                  <div class="hero-badge">Profile Image</div>
+                  <div class="image-card">
+                    <img id="hero-image" src="assets/profile-placeholder.jpg" alt="Profile" class="hero-image" />
+                    <label class="image-upload-label">
+                      <input type="file" id="image-upload" class="image-upload-input" accept="image/*" />
+                      <span class="upload-btn">📤 Upload Image</span>
+                    </label>
+                  </div>
+                </div>
+                <!-- Code Section -->
+                <div class="hero-panel">
+                  <div class="hero-badge">Featured</div>
+                  <div class="code-card">
+                    <pre><code>const developer = {
   name: "Jagannath Mani",
   skills: ["Python", "JavaScript", "PHP", "SQL", "HTML", "CSS"],
   passion: "Automation, debugging, and responsive web development"
 };</code></pre>
+                  </div>
                 </div>
               </div>
             </div>

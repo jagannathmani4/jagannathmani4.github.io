@@ -66,7 +66,7 @@ const portfolioDB = {
     {
       id: 1,
       email: 'jagannathmani4@gmail.com',
-      password: 'admin123',
+      password: 'Jagannath@2005',
       displayName: 'Jagannath',
       isAdmin: true,
       verified: true,
@@ -167,22 +167,8 @@ function renderAuthSection() {
   const currentUser = getCurrentUser();
   const pendingEmail = getPendingVerification();
   if (currentUser) {
-    authSection.innerHTML = `
-      <div class="glass-card p-4 mb-4 auth-card">
-        <h3 class="mb-3">Welcome back, ${currentUser.displayName || currentUser.email}</h3>
-        <p class="text-muted mb-3">
-          ${currentUser.isAdmin ? 'You are an admin. You can add products and manage users.' : 'You are logged in as a verified user. Admins can add products.'}
-        </p>
-        <div class="d-flex gap-3 flex-wrap">
-          <button class="btn btn-outline-light" id="logout-btn">Logout</button>
-        </div>
-      </div>
-    `;
-    document.getElementById('logout-btn')?.addEventListener('click', () => {
-      clearCurrentUser();
-      renderAuthSection();
-      renderAdminPanel();
-    });
+    // Hide auth section when user is logged in
+    authSection.innerHTML = '';
     return;
   }
 
@@ -256,17 +242,17 @@ function handleLogin(event) {
     return;
   }
 
-  if (!user.verified) {
-    setPendingVerification(user.email);
-    saveUsers(users);
-    renderAuthSection();
-    showAuthMessage('login-message', 'Your email is not verified. Check the code sent to your email.', 'warning');
-    return;
-  }
-
-  saveCurrentUser(user);
+  // Generate OTP and send to email
+  const otp = makeVerificationCode();
+  
+  // Store OTP temporarily with user
+  user.loginOtp = otp;
+  saveUsers(users);
+  
+  // Set pending verification
+  setPendingVerification(email);
   renderAuthSection();
-  renderAdminPanel();
+  showAuthMessage('login-message', `✓ Credentials verified. OTP sent to ${email}. Check your email and enter the code below.`, 'success');
 }
 
 function handleRegister(event) {
@@ -307,17 +293,20 @@ function handleVerify(event) {
   const user = users.find((item) => item.email === pendingEmail);
 
   if (!user) {
-    showAuthMessage('verify-message', 'No pending verification was found. Please register again.', 'danger');
+    showAuthMessage('verify-message', 'No pending verification was found. Please try again.', 'danger');
     return;
   }
 
-  if (user.verificationCode !== code) {
+  // Check for login OTP first, then registration verification code
+  const expectedCode = user.loginOtp || user.verificationCode;
+  if (expectedCode !== code) {
     showAuthMessage('verify-message', 'The verification code is incorrect.', 'danger');
     return;
   }
 
   user.verified = true;
   delete user.verificationCode;
+  delete user.loginOtp;
   saveUsers(users);
   clearPendingVerification();
   saveCurrentUser(user);
@@ -739,6 +728,40 @@ function animateCounters() {
   });
 }
 
+function setupImageUpload() {
+  const imageUploadInput = document.getElementById('image-upload');
+  const heroImage = document.getElementById('hero-image');
+  
+  if (!imageUploadInput || !heroImage) return;
+
+  // Load saved image from localStorage on page load
+  const savedImage = localStorage.getItem('heroImage');
+  if (savedImage) {
+    heroImage.src = savedImage;
+  }
+
+  imageUploadInput.addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Validate file is an image
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+
+    // Convert to base64 and save
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const imageData = e.target.result;
+      heroImage.src = imageData;
+      localStorage.setItem('heroImage', imageData);
+      console.log('Image uploaded successfully');
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 window.addEventListener('DOMContentLoaded', () => {
   renderHeroTechs();
   renderSkills();
@@ -748,5 +771,6 @@ window.addEventListener('DOMContentLoaded', () => {
   renderAdminPanel();
   setupContactForm();
   setupCvRequestForm();
+  setupImageUpload();
   animateCounters();
 });

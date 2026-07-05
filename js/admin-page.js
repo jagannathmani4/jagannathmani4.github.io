@@ -1,51 +1,129 @@
 import * as db from './firebase-service.js';
 
-const state = { currentUser: null };
+const initialUsers = [
+  {
+    id: 1,
+    email: 'jagannathmani4@gmail.com',
+    password: 'Jagannath@2005',
+    displayName: 'Jagannath',
+    isAdmin: true,
+    verified: true,
+    createdAt: '2026-07-05'
+  }
+];
+
+const state = { 
+  currentUser: JSON.parse(localStorage.getItem('currentUser') || 'null')
+};
 
 window.addEventListener('DOMContentLoaded', () => {
+  // Initialize users in localStorage if not already done
+  if (!localStorage.getItem('portfolioUsers')) {
+    localStorage.setItem('portfolioUsers', JSON.stringify(initialUsers));
+  }
+  
   renderAuthSection();
-  initializeData().catch((error) => console.error('Admin page init failed', error));
+  loadAdminOverview().catch(e => console.error('Error', e));
 });
 
 async function initializeData() {
   try {
     await db.getUsersFromDb();
-    await loadAdminOverview();
   } catch (error) {
     console.error('Firestore unavailable', error);
   }
 }
 
+function makeVerificationCode() {
+  return Math.random().toString().slice(2, 8);
+}
+
+function showMessage(elementId, message, type) {
+  const container = document.getElementById(elementId);
+  if (!container) return;
+  container.innerHTML = `<div class="alert alert-${type} py-2" role="alert">${message}</div>`;
+}
+
 function renderAuthSection() {
   const el = document.getElementById('auth-section');
   if (!el) return;
+  
+  const currentUser = state.currentUser;
+  const pendingEmail = localStorage.getItem('pendingVerificationEmail');
+  
+  if (currentUser) {
+    // Hide auth when logged in
+    el.innerHTML = '';
+    return;
+  }
+
   el.innerHTML = `
     <div class="auth-card p-3 mb-4">
       <div class="d-flex flex-column flex-md-row gap-2">
         <input id="email-input" class="form-control" placeholder="Email" />
-        <input id="phone-input" class="form-control" placeholder="Contact number" />
-        <button id="login-btn" class="btn btn-primary">Login / Register</button>
+        <input id="password-input" class="form-control" type="password" placeholder="Password" />
+        <button id="login-btn" class="btn btn-primary">Login</button>
+      </div>
+      <div id="login-message"></div>
+      <div id="verify-section" class="mt-3 ${pendingEmail ? '' : 'd-none'}">
+        <input id="otp-input" class="form-control mb-2" placeholder="Enter OTP code" />
+        <button id="verify-btn" class="btn btn-primary w-100">Verify OTP</button>
+        <div id="verify-message"></div>
       </div>
     </div>
   `;
+  
   document.getElementById('login-btn').addEventListener('click', handleLogin);
+  document.getElementById('verify-btn').addEventListener('click', handleVerify);
 }
 
-async function handleLogin() {
-  const email = document.getElementById('email-input').value.trim();
-  const phone = document.getElementById('phone-input').value.trim();
-  if (!email) return alert('Enter email');
-
-  let user = await db.getUserByEmail(email);
-  if (!user) {
-    user = await db.saveUserToDb({ email, phone, role: 'user', verified: false });
-    alert('Registered. Verification code sent (simulated).');
-  } else {
-    alert('Login link (simulated) sent');
+function handleLogin() {
+  const email = document.getElementById('email-input').value.trim().toLowerCase();
+  const password = document.getElementById('password-input').value.trim();
+  
+  if (!email || !password) {
+    showMessage('login-message', 'Please enter email and password', 'danger');
+    return;
   }
+  
+  const users = JSON.parse(localStorage.getItem('portfolioUsers') || '[]');
+  const user = users.find(u => u.email === email);
+  
+  if (!user || user.password !== password) {
+    showMessage('login-message', 'Invalid credentials', 'danger');
+    return;
+  }
+  
+  const otp = makeVerificationCode();
+  user.loginOtp = otp;
+  localStorage.setItem('portfolioUsers', JSON.stringify(users));
+  localStorage.setItem('pendingVerificationEmail', email);
+  
+  renderAuthSection();
+  showMessage('login-message', `OTP sent to ${email}`, 'success');
+}
 
+function handleVerify() {
+  const otp = document.getElementById('otp-input').value.trim();
+  const pendingEmail = localStorage.getItem('pendingVerificationEmail');
+  
+  const users = JSON.parse(localStorage.getItem('portfolioUsers') || '[]');
+  const user = users.find(u => u.email === pendingEmail);
+  
+  if (!user || user.loginOtp !== otp) {
+    showMessage('verify-message', 'Invalid OTP', 'danger');
+    return;
+  }
+  
+  user.verified = true;
+  delete user.loginOtp;
+  localStorage.setItem('portfolioUsers', JSON.stringify(users));
+  localStorage.setItem('currentUser', JSON.stringify(user));
+  localStorage.removeItem('pendingVerificationEmail');
+  
   state.currentUser = user;
-  await loadAdminOverview();
+  renderAuthSection();
+  loadAdminOverview();
 }
 
 async function loadAdminOverview() {
