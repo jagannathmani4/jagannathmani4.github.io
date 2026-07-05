@@ -123,11 +123,13 @@ async function handleLogin() {
         return;
       } catch (createError) {
         console.error('Admin Firebase account creation failed', createError);
+        showMessage('login-message', db.getFirebaseAuthErrorMessage(createError), 'danger');
+        return;
       }
     }
 
     console.error('Firebase sign in failed', error);
-    showMessage('login-message', 'Invalid email/password, or Firebase Authentication is not enabled for this project.', 'danger');
+    showMessage('login-message', db.getFirebaseAuthErrorMessage(error), 'danger');
   }
 }
 

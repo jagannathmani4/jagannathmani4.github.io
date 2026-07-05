@@ -24,16 +24,9 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-function getVerificationSettings() {
-  return {
-    url: window.location.href,
-    handleCodeInApp: false
-  };
-}
-
 export async function createFirebaseUserAndSendVerification(email, password) {
   const credential = await createUserWithEmailAndPassword(auth, email, password);
-  await sendEmailVerification(credential.user, getVerificationSettings());
+  await sendEmailVerification(credential.user);
   return credential.user;
 }
 
@@ -44,11 +37,28 @@ export async function signInWithFirebaseEmail(email, password) {
 }
 
 export async function sendFirebaseVerificationEmail(user) {
-  await sendEmailVerification(user, getVerificationSettings());
+  await sendEmailVerification(user);
 }
 
 export async function signOutFirebaseUser() {
   await signOut(auth);
+}
+
+export function getFirebaseAuthErrorMessage(error) {
+  const code = error?.code || 'unknown';
+  const messages = {
+    'auth/operation-not-allowed': 'Enable Email/Password in Firebase Console > Authentication > Sign-in method.',
+    'auth/unauthorized-continue-uri': 'Add this website domain in Firebase Console > Authentication > Settings > Authorized domains.',
+    'auth/invalid-continue-uri': 'The email verification return URL is invalid. Use the site through localhost or your deployed domain.',
+    'auth/email-already-in-use': 'That email is already registered. Please sign in instead.',
+    'auth/user-not-found': 'No Firebase Auth account exists for this email.',
+    'auth/wrong-password': 'The password is incorrect.',
+    'auth/invalid-credential': 'Invalid email or password.',
+    'auth/too-many-requests': 'Firebase has temporarily blocked this action after too many attempts. Try again later.',
+    'auth/network-request-failed': 'Network request failed. Check your internet connection and Firebase project access.'
+  };
+
+  return `${messages[code] || 'Firebase Authentication failed.'} (${code})`;
 }
 
 export async function getUsersFromDb() {

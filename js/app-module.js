@@ -170,11 +170,13 @@ async function handleLogin(event) {
         return;
       } catch (createError) {
         console.error('Admin Firebase account creation failed', createError);
+        showMessage('login-message', db.getFirebaseAuthErrorMessage(createError), 'danger');
+        return;
       }
     }
 
     console.error('Firebase sign in failed', error);
-    showMessage('login-message', 'Invalid email/password, or Firebase Authentication is not enabled for this project.', 'danger');
+    showMessage('login-message', db.getFirebaseAuthErrorMessage(error), 'danger');
   }
 }
 
@@ -192,10 +194,7 @@ async function handleRegister(event) {
     showMessage('login-message', `Account created. Firebase sent a verification link to ${email}. Verify it, then sign in.`, 'success');
   } catch (error) {
     console.error('Firebase registration failed', error);
-    const message = error.code === 'auth/email-already-in-use'
-      ? 'That email is already registered. Please sign in instead.'
-      : 'Could not create the account. Make sure Firebase Authentication email/password sign-in is enabled.';
-    showMessage('register-message', message, 'danger');
+    showMessage('register-message', db.getFirebaseAuthErrorMessage(error), 'danger');
   }
 }
 
