@@ -673,14 +673,29 @@ async function loadRequests() {
 
 window.addEventListener('DOMContentLoaded', async () => {
   loadAppState();
-  await initializeData();
-  await loadProducts();
+  renderAuthSection();
   renderHeroTechs();
   renderSkills();
   renderProjects();
-  renderSuggestedProducts();
-  renderAuthSection();
-  await renderAdminPanel();
+
+  try {
+    await initializeData();
+    await loadProducts();
+    renderSuggestedProducts();
+    await renderAdminPanel();
+  } catch (error) {
+    console.error('Firebase initialization failed:', error);
+    const panel = document.getElementById('admin-panel');
+    if (panel) {
+      panel.innerHTML = `
+        <div class="glass-card p-4 auth-card">
+          <h4 class="mb-3">Connection Notice</h4>
+          <p class="text-muted">There was an issue loading product data. The login section is still available below.</p>
+        </div>
+      `;
+    }
+  }
+
   setupContactForm();
   setupCvRequestForm();
   animateCounters();
