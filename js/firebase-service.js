@@ -1,6 +1,14 @@
 // Firestore helper (moved to js/)
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js';
 import { getFirestore, collection, getDocs, query, where, addDoc, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js';
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  sendEmailVerification,
+  signOut,
+  reload
+} from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBBzZm9c0xUJl9BcRmC1V79EUSAULztMeY",
@@ -14,6 +22,34 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
+
+function getVerificationSettings() {
+  return {
+    url: window.location.href,
+    handleCodeInApp: false
+  };
+}
+
+export async function createFirebaseUserAndSendVerification(email, password) {
+  const credential = await createUserWithEmailAndPassword(auth, email, password);
+  await sendEmailVerification(credential.user, getVerificationSettings());
+  return credential.user;
+}
+
+export async function signInWithFirebaseEmail(email, password) {
+  const credential = await signInWithEmailAndPassword(auth, email, password);
+  await reload(credential.user);
+  return credential.user;
+}
+
+export async function sendFirebaseVerificationEmail(user) {
+  await sendEmailVerification(user, getVerificationSettings());
+}
+
+export async function signOutFirebaseUser() {
+  await signOut(auth);
+}
 
 export async function getUsersFromDb() {
   const snap = await getDocs(collection(db, 'users'));

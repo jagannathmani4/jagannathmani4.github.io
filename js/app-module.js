@@ -1,15 +1,8 @@
 import * as db from './firebase-service.js';
+import { DEFAULT_ADMIN_USER, ensureDefaultAdminUser } from './admin-account.js';
 
 const initialUsers = [
-  {
-    id: 1,
-    email: 'jagannathmani4@gmail.com',
-    password: 'Jagannath@2005',
-    displayName: 'Jagannath',
-    isAdmin: true,
-    verified: true,
-    createdAt: '2026-07-05'
-  }
+  DEFAULT_ADMIN_USER
 ];
 
 const state = { 
@@ -22,6 +15,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!localStorage.getItem('portfolioUsers')) {
     localStorage.setItem('portfolioUsers', JSON.stringify(initialUsers));
   }
+  ensureDefaultAdminUser();
+  state.currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
   
   // Ensure auth UI renders even if Firestore has issues.
   renderAuthSection();
@@ -57,8 +52,7 @@ function renderAuthSection() {
   if (!el) return;
   
   const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
-  const pendingEmail = localStorage.getItem('pendingVerificationEmail');
-  
+
   if (currentUser) {
     // Hide auth section when logged in
     el.innerHTML = '';
@@ -101,18 +95,6 @@ function renderAuthSection() {
             <button type="submit" class="btn btn-outline-light w-100">Register</button>
           </form>
       </div>
-      <div id="verify-section" class="mt-4 ${pendingEmail ? '' : 'd-none'}">
-        <h5 class="mb-3">Verify your email</h5>
-        <p class="text-muted">A verification code has been sent to <strong>${pendingEmail || 'your email'}</strong>. Enter it below.</p>
-        <div id="verify-message"></div>
-        <form id="verify-form">
-          <div class="mb-3">
-            <label class="form-label">Verification Code</label>
-            <input type="text" class="form-control" id="verify-code" required />
-          </div>
-          <button type="submit" class="btn btn-primary w-100">Verify Email</button>
-        </form>
-      </div>
     </div>
   `;
 
@@ -122,11 +104,6 @@ function renderAuthSection() {
   });
   document.getElementById('login-form')?.addEventListener('submit', handleLogin);
   document.getElementById('register-form')?.addEventListener('submit', handleRegister);
-  document.getElementById('verify-form')?.addEventListener('submit', handleVerify);
-}
-
-function makeVerificationCode() {
-  return Math.random().toString().slice(2, 8);
 }
 
 function showMessage(elementId, message, type) {
@@ -135,94 +112,91 @@ function showMessage(elementId, message, type) {
   container.innerHTML = `<div class="alert alert-${type} py-2" role="alert">${message}</div>`;
 }
 
-function handleLogin(event) {
+function upsertLocalUser(userData) {
+  const users = JSON.parse(localStorage.getItem('portfolioUsers') || '[]');
+  const index = users.findIndex(u => u.email === userData.email);
+
+  if (index >= 0) {
+    users[index] = { ...users[index], ...userData };
+  } else {
+    users.push(userData);
+  }
+
+  localStorage.setItem('portfolioUsers', JSON.stringify(users));
+  return index >= 0 ? users[index] : userData;
+}
+
+function buildLocalUser(firebaseUser, password) {
+  const isAdmin = firebaseUser.email === DEFAULT_ADMIN_USER.email;
+  return {
+    id: firebaseUser.uid,
+    email: firebaseUser.email,
+    password,
+    displayName: isAdmin ? DEFAULT_ADMIN_USER.displayName : firebaseUser.email.split('@')[0],
+    isAdmin,
+    role: isAdmin ? 'admin' : 'user',
+    verified: firebaseUser.emailVerified,
+    createdAt: new Date().toISOString()
+  };
+}
+
+async function handleLogin(event) {
   event.preventDefault();
   const email = document.getElementById('login-email').value.trim().toLowerCase();
   const password = document.getElementById('login-password').value.trim();
-  
-  // Get users from localStorage
-  const users = JSON.parse(localStorage.getItem('portfolioUsers') || '[]');
-  const user = users.find(u => u.email === email);
-  
-  if (!user || user.password !== password) {
-    showMessage('login-message', 'Invalid email or password.', 'danger');
-    return;
+
+  try {
+    const firebaseUser = await db.signInWithFirebaseEmail(email, password);
+
+    if (!firebaseUser.emailVerified) {
+      await db.sendFirebaseVerificationEmail(firebaseUser);
+      await db.signOutFirebaseUser();
+      showMessage('login-message', `Please verify your email first. Firebase sent a verification link to ${email}.`, 'warning');
+      return;
+    }
+
+    const user = upsertLocalUser(buildLocalUser(firebaseUser, password));
+    localStorage.setItem('currentUser', JSON.stringify(user));
+    localStorage.removeItem('pendingVerificationEmail');
+    state.currentUser = user;
+    renderAuthSection();
+    renderAdminPanel();
+  } catch (error) {
+    if (email === DEFAULT_ADMIN_USER.email && password === DEFAULT_ADMIN_USER.password) {
+      try {
+        await db.createFirebaseUserAndSendVerification(email, password);
+        await db.signOutFirebaseUser();
+        showMessage('login-message', `Admin account created in Firebase. Verification link sent to ${email}. Verify it, then sign in again.`, 'success');
+        return;
+      } catch (createError) {
+        console.error('Admin Firebase account creation failed', createError);
+      }
+    }
+
+    console.error('Firebase sign in failed', error);
+    showMessage('login-message', 'Invalid email/password, or Firebase Authentication is not enabled for this project.', 'danger');
   }
-  
-  // Generate OTP
-  const otp = makeVerificationCode();
-  
-  // Store OTP with user
-  user.loginOtp = otp;
-  localStorage.setItem('portfolioUsers', JSON.stringify(users));
-  localStorage.setItem('pendingVerificationEmail', email);
-  
-  renderAuthSection();
-  showMessage('login-message', `✓ Credentials verified. OTP sent to ${email}. Check your email and enter the code below.`, 'success');
 }
 
-function handleRegister(event) {
+async function handleRegister(event) {
   event.preventDefault();
   const email = document.getElementById('register-email').value.trim().toLowerCase();
   const password = document.getElementById('register-password').value.trim();
-  
-  const users = JSON.parse(localStorage.getItem('portfolioUsers') || '[]');
-  
-  if (users.some(u => u.email === email)) {
-    showMessage('register-message', 'That email is already registered. Please login instead.', 'danger');
-    return;
-  }
-  
-  const verificationCode = makeVerificationCode();
-  const newUser = {
-    id: Date.now(),
-    email,
-    password,
-    displayName: email.split('@')[0],
-    isAdmin: false,
-    verified: false,
-    verificationCode,
-    createdAt: new Date().toISOString()
-  };
-  
-  users.push(newUser);
-  localStorage.setItem('portfolioUsers', JSON.stringify(users));
-  localStorage.setItem('pendingVerificationEmail', email);
-  
-  renderAuthSection();
-  showMessage('verify-message', `Your account has been created. Use code ${verificationCode} to verify your email.`, 'success');
-}
 
-function handleVerify(event) {
-  event.preventDefault();
-  const code = document.getElementById('verify-code').value.trim();
-  const pendingEmail = localStorage.getItem('pendingVerificationEmail');
-  
-  const users = JSON.parse(localStorage.getItem('portfolioUsers') || '[]');
-  const user = users.find(u => u.email === pendingEmail);
-  
-  if (!user) {
-    showMessage('verify-message', 'No pending verification found.', 'danger');
-    return;
+  try {
+    const firebaseUser = await db.createFirebaseUserAndSendVerification(email, password);
+    upsertLocalUser(buildLocalUser(firebaseUser, password));
+    await db.signOutFirebaseUser();
+    state.authMode = 'login';
+    renderAuthSection();
+    showMessage('login-message', `Account created. Firebase sent a verification link to ${email}. Verify it, then sign in.`, 'success');
+  } catch (error) {
+    console.error('Firebase registration failed', error);
+    const message = error.code === 'auth/email-already-in-use'
+      ? 'That email is already registered. Please sign in instead.'
+      : 'Could not create the account. Make sure Firebase Authentication email/password sign-in is enabled.';
+    showMessage('register-message', message, 'danger');
   }
-  
-  const expectedCode = user.loginOtp || user.verificationCode;
-  if (expectedCode !== code) {
-    showMessage('verify-message', 'The verification code is incorrect.', 'danger');
-    return;
-  }
-  
-  user.verified = true;
-  delete user.verificationCode;
-  delete user.loginOtp;
-  
-  localStorage.setItem('portfolioUsers', JSON.stringify(users));
-  localStorage.setItem('currentUser', JSON.stringify(user));
-  localStorage.removeItem('pendingVerificationEmail');
-  
-  state.currentUser = user;
-  renderAuthSection();
-  renderAdminPanel();
 }
 
 async function renderAdminPanel() {

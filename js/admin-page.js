@@ -1,15 +1,8 @@
 import * as db from './firebase-service.js';
+import { DEFAULT_ADMIN_USER, ensureDefaultAdminUser } from './admin-account.js';
 
 const initialUsers = [
-  {
-    id: 1,
-    email: 'jagannathmani4@gmail.com',
-    password: 'Jagannath@2005',
-    displayName: 'Jagannath',
-    isAdmin: true,
-    verified: true,
-    createdAt: '2026-07-05'
-  }
+  DEFAULT_ADMIN_USER
 ];
 
 const state = { 
@@ -21,6 +14,8 @@ window.addEventListener('DOMContentLoaded', () => {
   if (!localStorage.getItem('portfolioUsers')) {
     localStorage.setItem('portfolioUsers', JSON.stringify(initialUsers));
   }
+  ensureDefaultAdminUser();
+  state.currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
   
   renderAuthSection();
   loadAdminOverview().catch(e => console.error('Error', e));
@@ -34,14 +29,38 @@ async function initializeData() {
   }
 }
 
-function makeVerificationCode() {
-  return Math.random().toString().slice(2, 8);
-}
-
 function showMessage(elementId, message, type) {
   const container = document.getElementById(elementId);
   if (!container) return;
   container.innerHTML = `<div class="alert alert-${type} py-2" role="alert">${message}</div>`;
+}
+
+function upsertLocalUser(userData) {
+  const users = JSON.parse(localStorage.getItem('portfolioUsers') || '[]');
+  const index = users.findIndex(u => u.email === userData.email);
+
+  if (index >= 0) {
+    users[index] = { ...users[index], ...userData };
+  } else {
+    users.push(userData);
+  }
+
+  localStorage.setItem('portfolioUsers', JSON.stringify(users));
+  return index >= 0 ? users[index] : userData;
+}
+
+function buildLocalUser(firebaseUser, password) {
+  const isAdmin = firebaseUser.email === DEFAULT_ADMIN_USER.email;
+  return {
+    id: firebaseUser.uid,
+    email: firebaseUser.email,
+    password,
+    displayName: isAdmin ? DEFAULT_ADMIN_USER.displayName : firebaseUser.email.split('@')[0],
+    isAdmin,
+    role: isAdmin ? 'admin' : 'user',
+    verified: firebaseUser.emailVerified,
+    createdAt: new Date().toISOString()
+  };
 }
 
 function renderAuthSection() {
@@ -49,8 +68,7 @@ function renderAuthSection() {
   if (!el) return;
   
   const currentUser = state.currentUser;
-  const pendingEmail = localStorage.getItem('pendingVerificationEmail');
-  
+
   if (currentUser) {
     // Hide auth when logged in
     el.innerHTML = '';
@@ -65,19 +83,13 @@ function renderAuthSection() {
         <button id="login-btn" class="btn btn-primary">Login</button>
       </div>
       <div id="login-message"></div>
-      <div id="verify-section" class="mt-3 ${pendingEmail ? '' : 'd-none'}">
-        <input id="otp-input" class="form-control mb-2" placeholder="Enter OTP code" />
-        <button id="verify-btn" class="btn btn-primary w-100">Verify OTP</button>
-        <div id="verify-message"></div>
-      </div>
     </div>
   `;
   
   document.getElementById('login-btn').addEventListener('click', handleLogin);
-  document.getElementById('verify-btn').addEventListener('click', handleVerify);
 }
 
-function handleLogin() {
+async function handleLogin() {
   const email = document.getElementById('email-input').value.trim().toLowerCase();
   const password = document.getElementById('password-input').value.trim();
   
@@ -86,44 +98,37 @@ function handleLogin() {
     return;
   }
   
-  const users = JSON.parse(localStorage.getItem('portfolioUsers') || '[]');
-  const user = users.find(u => u.email === email);
-  
-  if (!user || user.password !== password) {
-    showMessage('login-message', 'Invalid credentials', 'danger');
-    return;
-  }
-  
-  const otp = makeVerificationCode();
-  user.loginOtp = otp;
-  localStorage.setItem('portfolioUsers', JSON.stringify(users));
-  localStorage.setItem('pendingVerificationEmail', email);
-  
-  renderAuthSection();
-  showMessage('login-message', `OTP sent to ${email}`, 'success');
-}
+  try {
+    const firebaseUser = await db.signInWithFirebaseEmail(email, password);
 
-function handleVerify() {
-  const otp = document.getElementById('otp-input').value.trim();
-  const pendingEmail = localStorage.getItem('pendingVerificationEmail');
-  
-  const users = JSON.parse(localStorage.getItem('portfolioUsers') || '[]');
-  const user = users.find(u => u.email === pendingEmail);
-  
-  if (!user || user.loginOtp !== otp) {
-    showMessage('verify-message', 'Invalid OTP', 'danger');
-    return;
+    if (!firebaseUser.emailVerified) {
+      await db.sendFirebaseVerificationEmail(firebaseUser);
+      await db.signOutFirebaseUser();
+      showMessage('login-message', `Please verify your email first. Firebase sent a verification link to ${email}.`, 'warning');
+      return;
+    }
+
+    const user = upsertLocalUser(buildLocalUser(firebaseUser, password));
+    localStorage.setItem('currentUser', JSON.stringify(user));
+    localStorage.removeItem('pendingVerificationEmail');
+    state.currentUser = user;
+    renderAuthSection();
+    loadAdminOverview();
+  } catch (error) {
+    if (email === DEFAULT_ADMIN_USER.email && password === DEFAULT_ADMIN_USER.password) {
+      try {
+        await db.createFirebaseUserAndSendVerification(email, password);
+        await db.signOutFirebaseUser();
+        showMessage('login-message', `Admin account created in Firebase. Verification link sent to ${email}. Verify it, then sign in again.`, 'success');
+        return;
+      } catch (createError) {
+        console.error('Admin Firebase account creation failed', createError);
+      }
+    }
+
+    console.error('Firebase sign in failed', error);
+    showMessage('login-message', 'Invalid email/password, or Firebase Authentication is not enabled for this project.', 'danger');
   }
-  
-  user.verified = true;
-  delete user.loginOtp;
-  localStorage.setItem('portfolioUsers', JSON.stringify(users));
-  localStorage.setItem('currentUser', JSON.stringify(user));
-  localStorage.removeItem('pendingVerificationEmail');
-  
-  state.currentUser = user;
-  renderAuthSection();
-  loadAdminOverview();
 }
 
 async function loadAdminOverview() {
