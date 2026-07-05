@@ -18,17 +18,17 @@ const GOOGLE_FORM_FIELDS = {
 };
 
 const portfolioDB = {
-  heroTechs: ['HTML', 'CSS', 'JavaScript', 'React', 'Node.js', 'Tailwind', 'Git'],
+  heroTechs: ['Python', 'JavaScript', 'PHP', 'MySQL', 'SQL', 'HTML', 'CSS'],
   skills: [
-    { label: 'HTML', level: 95 },
+    { label: 'Python', level: 90 },
+    { label: 'JavaScript', level: 88 },
+    { label: 'PHP + MySQL', level: 85 },
+    { label: 'SQL / SQLite', level: 84 },
+    { label: 'HTML', level: 93 },
     { label: 'CSS', level: 90 },
-    { label: 'JavaScript', level: 90 },
-    { label: 'React.js', level: 85 },
-    { label: 'Next.js', level: 80 },
-    { label: 'TypeScript', level: 85 },
-    { label: 'Node.js', level: 80 },
-    { label: 'Tailwind CSS', level: 90 },
-    { label: 'Git', level: 85 }
+    { label: 'AJAX / JSON', level: 82 },
+    { label: 'Responsive Design', level: 88 },
+    { label: 'Workflow Automation', level: 86 }
   ],
   projects: [
     {
