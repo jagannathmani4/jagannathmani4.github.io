@@ -1,0 +1,5 @@
+[
+    {"title": "Web Development", "icon": "🌐", "desc": "Custom, responsive websites built from scratch to perform perfectly on any device."},
+    {"title": "Backend Systems", "icon": "⚙️", "desc": "Secure, fast, and scalable database architectures using modern PHP methodologies."},
+    {"title": "Digital Branding", "icon": "🎨", "desc": "Visual identities that capture your essence and communicate your value clearly."}
+]
