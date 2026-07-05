@@ -1,3 +1,9 @@
+const GOOGLE_FORM_ACTION = 'https://docs.google.com/forms/d/e/YOUR_FORM_ID/formResponse';
+const GOOGLE_FORM_FIELDS = {
+  email: 'entry.1234567890',
+  phone: 'entry.0987654321'
+};
+
 const portfolioDB = {
   heroTechs: ['HTML', 'CSS', 'JavaScript', 'React', 'Node.js', 'Tailwind', 'Git'],
   skills: [
@@ -29,6 +35,23 @@ const portfolioDB = {
       description: 'Real-time cryptocurrency tracking dashboard with interactive charts.',
       tech: ['React', 'Chart.js', 'API'],
       image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=900&q=80'
+    }
+  ],
+  suggestedProducts: [
+    {
+      name: 'Pro Headphones',
+      price: '$149',
+      image: 'https://images.unsplash.com/photo-1511376777868-611b54f68947?auto=format&fit=crop&w=900&q=80'
+    },
+    {
+      name: 'Smart Desk Lamp',
+      price: '$89',
+      image: 'https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&fit=crop&w=900&q=80'
+    },
+    {
+      name: 'Wireless Charger',
+      price: '$39',
+      image: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=900&q=80'
     }
   ]
 };
@@ -91,6 +114,27 @@ function renderProjects() {
     .join('');
 }
 
+function renderSuggestedProducts() {
+  const productsGrid = document.getElementById('products-grid');
+  if (!productsGrid) return;
+
+  productsGrid.innerHTML = portfolioDB.suggestedProducts
+    .map(
+      (product) => `
+      <div class="col-lg-4 col-md-6">
+        <article class="project-card h-100">
+          <img src="${product.image}" alt="${product.name}" />
+          <div class="project-body">
+            <h3 class="h5 mt-3">${product.name}</h3>
+            <p class="text-muted mt-2">${product.price}</p>
+          </div>
+        </article>
+      </div>
+    `
+    )
+    .join('');
+}
+
 function setupContactForm() {
   const form = document.getElementById('contact-form');
   const messageBox = document.getElementById('contact-message');
@@ -101,6 +145,46 @@ function setupContactForm() {
     messageBox.textContent = 'Thanks! Your message has been received. I’ll reply soon.';
     messageBox.classList.remove('d-none');
     form.reset();
+  });
+}
+
+function setupCvRequestForm() {
+  const form = document.getElementById('cv-request-form');
+  const messageBox = document.getElementById('cv-request-message');
+  const downloadCvBtn = document.getElementById('download-cv-btn');
+  const modalElement = document.getElementById('downloadCvModal');
+  const modal = modalElement ? new bootstrap.Modal(modalElement) : null;
+
+  downloadCvBtn?.addEventListener('click', () => modal?.show());
+
+  if (!form || !messageBox) return;
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const email = document.getElementById('cv-email').value;
+    const phone = document.getElementById('cv-phone').value;
+
+    const payload = new URLSearchParams();
+    payload.append(GOOGLE_FORM_FIELDS.email, email);
+    payload.append(GOOGLE_FORM_FIELDS.phone, phone);
+
+    try {
+      await fetch(GOOGLE_FORM_ACTION, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: payload.toString()
+      });
+
+      form.reset();
+      messageBox.textContent = 'Your CV request has been sent. I will follow up shortly.';
+      messageBox.classList.remove('d-none');
+    } catch (error) {
+      messageBox.textContent = 'There was a problem sending your request. Please try again later.';
+      messageBox.classList.remove('d-none');
+    }
   });
 }
 
@@ -132,6 +216,8 @@ window.addEventListener('DOMContentLoaded', () => {
   renderHeroTechs();
   renderSkills();
   renderProjects();
+  renderSuggestedProducts();
   setupContactForm();
+  setupCvRequestForm();
   animateCounters();
 });
