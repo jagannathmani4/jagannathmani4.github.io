@@ -273,6 +273,19 @@ h1 {
   border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 
+.auth-card {
+  border-radius: 1.5rem;
+}
+
+.user-table th,
+.user-table td {
+  vertical-align: middle;
+}
+
+.request-card {
+  border-radius: 1.5rem;
+}
+
 .footer {
   color: var(--muted);
 }

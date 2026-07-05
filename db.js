@@ -47,5 +47,17 @@ const portfolioDB = {
       price: '$39',
       image: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=900&q=80'
     }
+  ],
+  suggestedProductRequests: [],
+  initialUsers: [
+    {
+      id: 1,
+      email: 'jagannathmani4@gmail.com',
+      password: 'admin123',
+      displayName: 'Jagannath',
+      isAdmin: true,
+      verified: true,
+      createdAt: '2026-07-05'
+    }
   ]
 };
