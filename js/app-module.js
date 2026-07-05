@@ -1,5 +1,5 @@
-import * as db from './firebase-service.js';
-import { DEFAULT_ADMIN_USER, ensureDefaultAdminUser } from './admin-account.js';
+import * as db from './firebase-service.js?v=firebase-auth-20260705';
+import { DEFAULT_ADMIN_USER, ensureDefaultAdminUser } from './admin-account.js?v=firebase-auth-20260705';
 
 const initialUsers = [
   DEFAULT_ADMIN_USER
@@ -142,10 +142,13 @@ function buildLocalUser(firebaseUser, password) {
 
 async function handleLogin(event) {
   event.preventDefault();
+  const submitButton = event.submitter;
   const email = document.getElementById('login-email').value.trim().toLowerCase();
   const password = document.getElementById('login-password').value.trim();
 
   try {
+    if (submitButton) submitButton.disabled = true;
+    showMessage('login-message', 'Signing in with Firebase...', 'info');
     const firebaseUser = await db.signInWithFirebaseEmail(email, password);
 
     if (!firebaseUser.emailVerified) {
@@ -177,15 +180,20 @@ async function handleLogin(event) {
 
     console.error('Firebase sign in failed', error);
     showMessage('login-message', db.getFirebaseAuthErrorMessage(error), 'danger');
+  } finally {
+    if (submitButton) submitButton.disabled = false;
   }
 }
 
 async function handleRegister(event) {
   event.preventDefault();
+  const submitButton = event.submitter;
   const email = document.getElementById('register-email').value.trim().toLowerCase();
   const password = document.getElementById('register-password').value.trim();
 
   try {
+    if (submitButton) submitButton.disabled = true;
+    showMessage('register-message', 'Creating Firebase account and sending verification email...', 'info');
     const firebaseUser = await db.createFirebaseUserAndSendVerification(email, password);
     upsertLocalUser(buildLocalUser(firebaseUser, password));
     await db.signOutFirebaseUser();
@@ -208,6 +216,8 @@ async function handleRegister(event) {
       }
     }
     showMessage('register-message', db.getFirebaseAuthErrorMessage(error), 'danger');
+  } finally {
+    if (submitButton) submitButton.disabled = false;
   }
 }
 

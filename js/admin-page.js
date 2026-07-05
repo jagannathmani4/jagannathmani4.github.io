@@ -1,5 +1,5 @@
-import * as db from './firebase-service.js';
-import { DEFAULT_ADMIN_USER, ensureDefaultAdminUser } from './admin-account.js';
+import * as db from './firebase-service.js?v=firebase-auth-20260705';
+import { DEFAULT_ADMIN_USER, ensureDefaultAdminUser } from './admin-account.js?v=firebase-auth-20260705';
 
 const initialUsers = [
   DEFAULT_ADMIN_USER
@@ -90,6 +90,7 @@ function renderAuthSection() {
 }
 
 async function handleLogin() {
+  const loginButton = document.getElementById('login-btn');
   const email = document.getElementById('email-input').value.trim().toLowerCase();
   const password = document.getElementById('password-input').value.trim();
   
@@ -99,6 +100,8 @@ async function handleLogin() {
   }
   
   try {
+    if (loginButton) loginButton.disabled = true;
+    showMessage('login-message', 'Signing in with Firebase...', 'info');
     const firebaseUser = await db.signInWithFirebaseEmail(email, password);
 
     if (!firebaseUser.emailVerified) {
@@ -130,6 +133,8 @@ async function handleLogin() {
 
     console.error('Firebase sign in failed', error);
     showMessage('login-message', db.getFirebaseAuthErrorMessage(error), 'danger');
+  } finally {
+    if (loginButton) loginButton.disabled = false;
   }
 }
 
