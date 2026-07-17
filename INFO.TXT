@@ -1,0 +1,16 @@
+project-root/
+├── db/
+│   ├── firebase.js
+│   └── db.js
+├── css/
+│   └── styles.css
+├── js/
+│   ├── app.js
+│   ├── cart.js
+│   ├── auth.js
+│   └── admin.js
+├── index.html
+├── cart.html
+├── login.html
+├── register.html
+└── admin.html
