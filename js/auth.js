@@ -5,62 +5,90 @@ import {
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import { getUserByEmail, saveUserToDb } from "../db/db.js";
 
+// --- UI TOGGLE LOGIC ---
+const loginContainer = document.getElementById('login-container');
+const registerContainer = document.getElementById('register-container');
+const showRegisterBtn = document.getElementById('show-register');
+const showLoginBtn = document.getElementById('show-login');
+
+if (showRegisterBtn && showLoginBtn) {
+    showRegisterBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        loginContainer.classList.add('d-none'); // Hide Login
+        registerContainer.classList.remove('d-none'); // Show Register
+    });
+
+    showLoginBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        registerContainer.classList.add('d-none'); // Hide Register
+        loginContainer.classList.remove('d-none'); // Show Login
+    });
+}
+
+// --- FIREBASE LOGIN LOGIC ---
 const loginForm = document.getElementById('login-form');
 if (loginForm) {
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
+        const email = document.getElementById('login-email').value;
+        const password = document.getElementById('login-password').value;
         
         try {
-            // 1. Authenticate securely with Firebase Auth
+            console.log("Attempting to log in...");
             await signInWithEmailAndPassword(auth, email, password);
             
-            // 2. Fetch user's role (admin or normal) from Firestore
             const userDoc = await getUserByEmail(email);
             const isAdmin = userDoc ? userDoc.isAdmin : false;
 
-            // 3. Save safe session info to local storage for UI updates
             localStorage.setItem('luxe_user', JSON.stringify({ email, isAdmin }));
-            
-            // 4. Redirect based on role
-            window.location.href = isAdmin ? 'admin.html' : 'index.html';
+            window.location.replace(isAdmin ? 'admin.html' : 'index.html');
         } catch (error) {
-            console.error("Login Error:", error);
-            alert('Login failed: Check your email and password.');
+            console.error("Login Error:", error.message);
+            alert(`Login Failed: ${error.message}`);
         }
     });
 }
 
+// --- FIREBASE REGISTER LOGIC ---
 const registerForm = document.getElementById('register-form');
 if (registerForm) {
     registerForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const name = document.getElementById('name').value;
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
+        const name = document.getElementById('reg-name').value;
+        const email = document.getElementById('reg-email').value;
+        const password = document.getElementById('reg-password').value;
+
+        if (password.length < 6) {
+            alert("Password must be at least 6 characters long.");
+            return;
+        }
 
         try {
-            // 1. Create the user securely in Firebase Auth
+            console.log("Creating user in Firebase Auth...");
             await createUserWithEmailAndPassword(auth, email, password);
 
-            // 2. Make your specific email the admin automatically
             const isAdmin = (email === 'jagannathmani5@gmail.com');
 
-            // 3. Save profile data to Firestore
             const userProfile = {
                 email,
                 displayName: name,
                 isAdmin: isAdmin,
                 createdAt: new Date().toISOString()
             };
+            
+            console.log("Saving user profile to database...");
             await saveUserToDb(userProfile);
 
-            alert('Registration successful! Please sign in.');
-            window.location.href = 'login.html';
+            alert('Registration successful! You can now log in.');
+            
+            // Swap UI back to Login form instead of redirecting
+            registerForm.reset();
+            registerContainer.classList.add('d-none');
+            loginContainer.classList.remove('d-none');
+            
         } catch (error) {
             console.error("Registration Error:", error);
-            alert('Registration error: ' + error.message);
+            alert(`Registration Error: ${error.message}`);
         }
     });
 }
