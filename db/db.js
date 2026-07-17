@@ -32,6 +32,7 @@ export async function deleteProductFromDb(productId) {
   await deleteDoc(doc(productsCollection, productId));
 }
 
+// 1. Updated Database Initialization Object
 export const luxeDB = {
   initialProducts: [
     { id: '1', name: 'Oversized Sweater', price: 49.99, image: 'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?auto=format&fit=crop&w=500&q=80', category: 'Women' },
@@ -39,17 +40,37 @@ export const luxeDB = {
     { id: '3', name: 'Luxury Handbag', price: 89.99, image: 'https://images.unsplash.com/photo-1584916201218-f4242ceb4809?auto=format&fit=crop&w=500&q=80', category: 'Bags' }
   ],
   initialUsers: [
-    { email: 'admin@luxefashion.com', password: 'admin123', displayName: 'Admin', isAdmin: true, createdAt: new Date().toISOString() }
+    { 
+      email: 'jagannathmani5@gmail.com', 
+      password: 'AdminPassword123!', // <-- Default Password
+      displayName: 'Jagannath Admin', 
+      isAdmin: true, 
+      createdAt: new Date().toISOString() 
+    }
   ]
 };
 
+// 2. Updated Seeding Logic to ensure your admin always exists
 export async function seedInitialData() {
-  const users = await getUsersFromDb();
-  if (!users.length) {
-    for (const user of luxeDB.initialUsers) await saveUserToDb(user);
-  }
-  const products = await getProductsFromDb();
-  if (!products.length) {
-    for (const product of luxeDB.initialProducts) await addProductToDb(product);
+  try {
+    // Check if the specific admin account exists, if not, create it
+    const adminUser = luxeDB.initialUsers[0];
+    const existingAdmin = await getUserByEmail(adminUser.email);
+    
+    if (!existingAdmin) {
+      await saveUserToDb(adminUser);
+      console.log("Default admin account created.");
+    }
+
+    // Seed products if the products collection is completely empty
+    const products = await getProductsFromDb();
+    if (!products.length) {
+      for (const product of luxeDB.initialProducts) {
+        await addProductToDb(product);
+      }
+      console.log("Default products seeded.");
+    }
+  } catch (error) {
+    console.error("Error seeding initial data:", error);
   }
 }
