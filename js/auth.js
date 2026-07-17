@@ -67,7 +67,7 @@ if (registerForm) {
             console.log("Creating user in Firebase Auth...");
             await createUserWithEmailAndPassword(auth, email, password);
 
-            const isAdmin = (email === 'jagannathmani5@gmail.com');
+            const isAdmin = (email === 'jagannathmani5@gmail.com' || email === 'sahebmani18@gmail.com');
 
             const userProfile = {
                 email,
