@@ -1,7 +1,7 @@
 import { 
     getProductsFromDb, addProductToDb, updateProductInDb, deleteProductFromDb,
     getRetailersFromDb, addRetailerToDb, updateRetailerInDb, deleteRetailerFromDb,
-    getOrdersFromDb, updateOrderStatusInDb
+    getOrdersFromDb, updateOrderStatusInDb, getStoreSettings, saveStoreSettings
 } from "../db/db.js";
 import { auth } from "../db/firebase.js";
 import { signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
@@ -21,31 +21,43 @@ document.getElementById('logout-btn')?.addEventListener('click', async (e) => {
 
 // --- NAVIGATION TOGGLE ---
 function resetNav() {
-    document.getElementById('nav-products').classList.remove('bg-light');
-    document.getElementById('nav-retailers').classList.remove('bg-light');
-    document.getElementById('nav-orders').classList.remove('bg-light');
-    document.getElementById('products-section').classList.add('d-none');
-    document.getElementById('retailers-section').classList.add('d-none');
-    document.getElementById('orders-section').classList.add('d-none');
+    ['nav-products', 'nav-retailers', 'nav-orders', 'nav-settings'].forEach(id => document.getElementById(id).classList.remove('bg-light'));
+    ['products-section', 'retailers-section', 'orders-section', 'settings-section'].forEach(id => document.getElementById(id).classList.add('d-none'));
 }
 
-document.getElementById('nav-products').addEventListener('click', () => {
-    resetNav();
-    document.getElementById('products-section').classList.remove('d-none');
-    document.getElementById('nav-products').classList.add('bg-light');
-    loadProducts();
-});
-document.getElementById('nav-retailers').addEventListener('click', () => {
-    resetNav();
-    document.getElementById('retailers-section').classList.remove('d-none');
-    document.getElementById('nav-retailers').classList.add('bg-light');
-    loadRetailers();
-});
-document.getElementById('nav-orders').addEventListener('click', () => {
-    resetNav();
-    document.getElementById('orders-section').classList.remove('d-none');
-    document.getElementById('nav-orders').classList.add('bg-light');
-    loadOrders();
+document.getElementById('nav-products').addEventListener('click', () => { resetNav(); document.getElementById('products-section').classList.remove('d-none'); document.getElementById('nav-products').classList.add('bg-light'); loadProducts(); });
+document.getElementById('nav-retailers').addEventListener('click', () => { resetNav(); document.getElementById('retailers-section').classList.remove('d-none'); document.getElementById('nav-retailers').classList.add('bg-light'); loadRetailers(); });
+document.getElementById('nav-orders').addEventListener('click', () => { resetNav(); document.getElementById('orders-section').classList.remove('d-none'); document.getElementById('nav-orders').classList.add('bg-light'); loadOrders(); });
+document.getElementById('nav-settings').addEventListener('click', () => { resetNav(); document.getElementById('settings-section').classList.remove('d-none'); document.getElementById('nav-settings').classList.add('bg-light'); loadSettings(); });
+
+
+// ================= WEB SETTINGS LOGIC =================
+async function loadSettings() {
+    try {
+        const settings = await getStoreSettings();
+        document.getElementById('set-logo').value = settings.logoText || '';
+        document.getElementById('set-email').value = settings.email || '';
+        document.getElementById('set-mobile').value = settings.phone || '';
+        document.getElementById('set-address').value = settings.address || '';
+    } catch(e) { console.error("Error loading settings", e); }
+}
+
+document.getElementById('settings-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = e.target.querySelector('button');
+    btn.innerText = "Saving..."; btn.disabled = true;
+    try {
+        await saveStoreSettings({
+            logoText: document.getElementById('set-logo').value,
+            email: document.getElementById('set-email').value,
+            phone: document.getElementById('set-mobile').value,
+            address: document.getElementById('set-address').value
+        });
+        alert("Web settings saved successfully!");
+    } catch(e) { 
+        alert("Error saving settings."); 
+    }
+    btn.innerText = "Save Settings"; btn.disabled = false;
 });
 
 // ================= PRODUCTS LOGIC =================
@@ -69,7 +81,7 @@ async function loadProducts() {
                     <td><img src="${p.image}" class="rounded shadow-sm" style="width: 50px; height: 50px; object-fit: cover;"></td>
                     <td class="fw-bold">${p.name}</td>
                     <td class="text-muted small" style="max-width: 200px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${p.details || 'No details'}</td>
-                    <td class="text-muted">$${p.price}</td>
+                    <td class="text-muted">₹${parseFloat(p.price).toFixed(2)}</td>
                     <td>
                         <button class="btn btn-sm btn-primary fw-bold me-1" onclick="editProduct('${p.id}')">Edit</button>
                         <button class="btn btn-sm btn-danger fw-bold" onclick="deleteProduct('${p.id}')">Delete</button>
@@ -81,20 +93,17 @@ async function loadProducts() {
     }
 }
 
-// Show Product Form
 document.getElementById('show-add-product-btn').addEventListener('click', () => {
     document.getElementById('product-form').reset();
-    document.getElementById('p-id').value = ''; // Ensure ID is clear for new product
+    document.getElementById('p-id').value = ''; 
     document.getElementById('product-form-title').innerText = 'Add New Product';
     document.getElementById('product-form-container').classList.remove('d-none');
 });
 
-// Hide Product Form
 document.getElementById('cancel-product-btn').addEventListener('click', () => {
     document.getElementById('product-form-container').classList.add('d-none');
 });
 
-// Add or Update Product
 document.getElementById('product-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = e.target.querySelector('button[type="submit"]');
@@ -120,7 +129,7 @@ document.getElementById('product-form').addEventListener('submit', async (e) => 
         }
 
         document.getElementById('product-form-container').classList.add('d-none');
-        loadProducts(); // Refresh the table
+        loadProducts(); 
     } catch (error) {
         alert("Failed to save product. Check database rules.");
     } finally {
@@ -129,7 +138,6 @@ document.getElementById('product-form').addEventListener('submit', async (e) => 
     }
 });
 
-// Edit Product (Populate Form)
 window.editProduct = (id) => {
     const p = productList.find(item => item.id === id);
     if(p) {
@@ -144,15 +152,12 @@ window.editProduct = (id) => {
     }
 };
 
-// Delete Product
 window.deleteProduct = async (id) => {
     if (confirm("Are you sure you want to delete this product?")) { 
         try {
             await deleteProductFromDb(id); 
             loadProducts(); 
-        } catch(e) {
-            alert("Failed to delete product.");
-        }
+        } catch(e) { alert("Failed to delete product."); }
     }
 };
 
@@ -201,9 +206,7 @@ document.getElementById('retailer-form').addEventListener('submit', async (e) =>
         else await addRetailerToDb(data);
         document.getElementById('retailer-form-container').classList.add('d-none');
         loadRetailers();
-    } catch(e) {
-        alert("Failed to save retailer.");
-    }
+    } catch(e) { alert("Failed to save retailer."); }
 });
 
 window.editRetailer = (id) => {
@@ -243,7 +246,7 @@ async function loadOrders() {
                 <tr>
                     <td class="fw-bold">${order.userEmail}</td>
                     <td class="small text-muted">${itemsHtml}</td>
-                    <td class="fw-bold">$${order.total.toFixed(2)}</td>
+                    <td class="fw-bold">₹${parseFloat(order.total).toFixed(2)}</td>
                     <td class="fw-bold ${statusClass}">${order.status}</td>
                     <td>
                         ${order.status === 'Pending' ? `
@@ -263,13 +266,10 @@ window.changeOrderStatus = async (id, newStatus) => {
         try {
             await updateOrderStatusInDb(id, newStatus);
             loadOrders(); 
-        } catch(e) {
-            alert("Failed to update status.");
-        }
+        } catch(e) { alert("Failed to update status."); }
     }
 };
 
-// --- INITIALIZE ---
 document.addEventListener('DOMContentLoaded', () => {
     loadProducts();
 });
