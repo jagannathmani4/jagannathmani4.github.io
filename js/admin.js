@@ -77,19 +77,36 @@ document.getElementById('cancel-product-btn').addEventListener('click', () => {
     document.getElementById('product-form-container').classList.add('d-none');
 });
 
+// ADD/UPDATE PRODUCT FORM (Updated with Fail-Safes)
 document.getElementById('product-form').addEventListener('submit', async (e) => {
     e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
     const id = document.getElementById('p-id').value;
+    
     const data = {
         name: document.getElementById('p-name').value,
         price: parseFloat(document.getElementById('p-price').value),
         image: document.getElementById('p-image').value,
         details: document.getElementById('p-details').value
     };
-    if (id) await updateProductInDb(id, data);
-    else await addProductToDb(data);
-    document.getElementById('product-form-container').classList.add('d-none');
-    loadProducts();
+
+    try {
+        btn.innerText = "Saving...";
+        btn.disabled = true;
+
+        if (id) await updateProductInDb(id, data);
+        else await addProductToDb(data);
+
+        document.getElementById('product-form-container').classList.add('d-none');
+        alert("Product saved successfully!");
+        loadProducts(); // Refresh the table
+    } catch (error) {
+        console.error("Product Save Error:", error);
+        alert("Failed to save product! Ensure your Firestore Database rules allow write access.");
+    } finally {
+        btn.innerText = "Save Product";
+        btn.disabled = false;
+    }
 });
 
 window.editProduct = (id) => {
@@ -103,7 +120,14 @@ window.editProduct = (id) => {
     document.getElementById('product-form-container').classList.remove('d-none');
 };
 window.deleteProduct = async (id) => {
-    if (confirm("Delete this product?")) { await deleteProductFromDb(id); loadProducts(); }
+    if (confirm("Delete this product?")) { 
+        try {
+            await deleteProductFromDb(id); 
+            loadProducts(); 
+        } catch(e) {
+            alert("Failed to delete product.");
+        }
+    }
 };
 
 // ================= RETAILERS LOGIC =================
@@ -146,10 +170,14 @@ document.getElementById('retailer-form').addEventListener('submit', async (e) =>
         contact: document.getElementById('r-contact').value,
         location: document.getElementById('r-location').value
     };
-    if (id) await updateRetailerInDb(id, data);
-    else await addRetailerToDb(data);
-    document.getElementById('retailer-form-container').classList.add('d-none');
-    loadRetailers();
+    try {
+        if (id) await updateRetailerInDb(id, data);
+        else await addRetailerToDb(data);
+        document.getElementById('retailer-form-container').classList.add('d-none');
+        loadRetailers();
+    } catch(e) {
+        alert("Failed to save retailer.");
+    }
 });
 
 window.editRetailer = (id) => {
@@ -204,8 +232,12 @@ async function loadOrders() {
 
 window.changeOrderStatus = async (id, newStatus) => {
     if(confirm(`Mark this order as ${newStatus}?`)) {
-        await updateOrderStatusInDb(id, newStatus);
-        loadOrders(); // Refresh table to show changes
+        try {
+            await updateOrderStatusInDb(id, newStatus);
+            loadOrders(); 
+        } catch(e) {
+            alert("Failed to update status.");
+        }
     }
 };
 

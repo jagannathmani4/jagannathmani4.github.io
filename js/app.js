@@ -1,11 +1,24 @@
 import { seedInitialData, getProductsFromDb } from "../db/db.js";
 
 async function initApp() {
-    await seedInitialData();
-    const products = await getProductsFromDb();
-    renderProducts(products);
-    updateCartCount();
+    // 1. ALWAYS check auth status immediately so the Navbar updates instantly
     checkAuthStatus();
+    updateCartCount();
+
+    // 2. Wrap database calls in a try-catch so it doesn't crash the page if it fails
+    try {
+        await seedInitialData();
+        const products = await getProductsFromDb();
+        renderProducts(products);
+    } catch (error) {
+        console.error("Storefront Database Error:", error);
+        document.getElementById('product-grid').innerHTML = `
+            <div class="col w-100 text-center">
+                <div class="alert alert-danger shadow-sm border-0 fw-bold">
+                    Could not load products. Please check your Firestore Database Rules.
+                </div>
+            </div>`;
+    }
 }
 
 function renderProducts(products) {
@@ -69,7 +82,6 @@ function updateCartCount() {
     document.getElementById('cart-count').innerText = count;
 }
 
-// --- UPDATED AUTH STATUS LOGIC ---
 function checkAuthStatus() {
     const user = JSON.parse(localStorage.getItem('luxe_user'));
     const authLink = document.getElementById('auth-link');
