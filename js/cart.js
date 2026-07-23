@@ -1,3 +1,5 @@
+import { addOrderToDb } from "../db/db.js";
+
 function loadCart() {
     const cart = JSON.parse(localStorage.getItem('luxe_cart')) || [];
     const container = document.getElementById('cart-items-container');
@@ -14,7 +16,6 @@ function loadCart() {
     cart.forEach((item, index) => {
         total += item.price * item.quantity;
         const div = document.createElement('div');
-        // Bootstrap Flex Layout for Cart Item
         div.className = 'd-flex align-items-center gap-3 border-bottom py-3';
         div.innerHTML = `
             <img src="${item.image}" alt="" class="rounded" style="width: 100px; height: 100px; object-fit: cover;">
@@ -37,13 +38,40 @@ window.removeItem = (index) => {
     loadCart();
 };
 
-document.getElementById('checkout-btn').addEventListener('click', () => {
+document.getElementById('checkout-btn')?.addEventListener('click', async () => {
     const cart = JSON.parse(localStorage.getItem('luxe_cart')) || [];
+    const user = JSON.parse(localStorage.getItem('luxe_user'));
+
     if(cart.length === 0) return alert("Add items to cart first!");
     
-    alert("Payment Successful! Thank you for your order.");
-    localStorage.removeItem('luxe_cart');
-    window.location.href = 'index.html';
+    // Require user to be logged in to checkout
+    if(!user) {
+        alert("Please log in to complete your purchase.");
+        window.location.href = 'login.html';
+        return;
+    }
+    
+    const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const orderData = {
+        userEmail: user.email,
+        items: cart,
+        total: total
+    };
+
+    try {
+        const btn = document.getElementById('checkout-btn');
+        btn.innerText = "Processing...";
+        btn.disabled = true;
+        
+        await addOrderToDb(orderData); // Save to database
+        
+        alert("Order placed successfully! Pending admin confirmation.");
+        localStorage.removeItem('luxe_cart');
+        window.location.href = 'orders.html'; // Redirect to customer orders page
+    } catch (error) {
+        alert("Error placing order. Please try again.");
+        console.error(error);
+    }
 });
 
 document.addEventListener('DOMContentLoaded', loadCart);

@@ -5,6 +5,8 @@ import { db } from "./firebase.js";
 
 const usersCollection = collection(db, 'users');
 const productsCollection = collection(db, 'products');
+const retailersCollection = collection(db, 'retailers');
+const ordersCollection = collection(db, 'orders'); // New Orders Collection
 
 async function fetchCollection(collectionRef, orderField = 'createdAt') {
   const collectionQuery = orderBy(orderField, 'desc');
@@ -12,6 +14,7 @@ async function fetchCollection(collectionRef, orderField = 'createdAt') {
   return snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
 }
 
+// --- USERS ---
 export async function getUsersFromDb() { return await fetchCollection(usersCollection); }
 export async function getUserByEmail(email) {
   const snapshot = await getDocs(query(usersCollection, where('email', '==', email)));
@@ -24,53 +27,56 @@ export async function saveUserToDb(user) {
   await setDoc(userRef, user, { merge: true });
 }
 
+// --- PRODUCTS ---
 export async function getProductsFromDb() { return await fetchCollection(productsCollection); }
-export async function addProductToDb(product) {
-  await addDoc(productsCollection, { ...product, createdAt: new Date().toISOString() });
+export async function addProductToDb(product) { await addDoc(productsCollection, { ...product, createdAt: new Date().toISOString() }); }
+export async function updateProductInDb(id, updates) { await updateDoc(doc(productsCollection, id), { ...updates, updatedAt: new Date().toISOString() }); }
+export async function deleteProductFromDb(id) { await deleteDoc(doc(productsCollection, id)); }
+
+// --- RETAILERS ---
+export async function getRetailersFromDb() { return await fetchCollection(retailersCollection); }
+export async function addRetailerToDb(retailer) { await addDoc(retailersCollection, { ...retailer, createdAt: new Date().toISOString() }); }
+export async function updateRetailerInDb(id, updates) { await updateDoc(doc(retailersCollection, id), { ...updates, updatedAt: new Date().toISOString() }); }
+export async function deleteRetailerFromDb(id) { await deleteDoc(doc(retailersCollection, id)); }
+
+// --- ORDERS ---
+export async function getOrdersFromDb() { 
+    return await fetchCollection(ordersCollection); 
 }
-export async function deleteProductFromDb(productId) {
-  await deleteDoc(doc(productsCollection, productId));
+export async function getUserOrdersFromDb(email) {
+    const q = query(ordersCollection, where('userEmail', '==', email), orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
+}
+export async function addOrderToDb(order) {
+    await addDoc(ordersCollection, { ...order, status: 'Pending', createdAt: new Date().toISOString() });
+}
+export async function updateOrderStatusInDb(orderId, status) {
+    await updateDoc(doc(ordersCollection, orderId), { status, updatedAt: new Date().toISOString() });
 }
 
-// 1. Updated Database Initialization Object
+// --- DEFAULT DATA SEEDING ---
 export const luxeDB = {
   initialProducts: [
-    { id: '1', name: 'Oversized Sweater', price: 49.99, image: 'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?auto=format&fit=crop&w=500&q=80', category: 'Women' },
-    { id: '2', name: 'Classic Sneakers', price: 69.99, image: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=500&q=80', category: 'Shoes' },
-    { id: '3', name: 'Luxury Handbag', price: 89.99, image: 'https://images.unsplash.com/photo-1584916201218-f4242ceb4809?auto=format&fit=crop&w=500&q=80', category: 'Bags' }
+    { name: 'Oversized Sweater', details: 'Comfortable cotton blend sweater.', price: 49.99, image: 'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?auto=format&fit=crop&w=500&q=80' }
   ],
   initialUsers: [
-    { 
-      email: 'jagannathmani5@gmail.com', 
-      password: 'AdminPassword123!', // <-- Default Password
-      displayName: 'Jagannath Admin', 
-      isAdmin: true, 
-      createdAt: new Date().toISOString() 
-    }
+    { email: 'jagannathmani4@gmail.com', password: 'Jagannath@2005', displayName: 'Jagannath Admin', isAdmin: true, createdAt: new Date().toISOString() },
+    { email: 'sahebmani18@gmail.com', password: 'Jagannath@2005', displayName: 'Saheb Admin', isAdmin: true, createdAt: new Date().toISOString() }
   ]
 };
 
-// 2. Updated Seeding Logic to ensure your admin always exists
 export async function seedInitialData() {
   try {
-    // Check if the specific admin account exists, if not, create it
-    const adminUser = luxeDB.initialUsers[0];
-    const existingAdmin = await getUserByEmail(adminUser.email);
-    
-    if (!existingAdmin) {
-      await saveUserToDb(adminUser);
-      console.log("Default admin account created.");
+    // Seed default admins
+    for (const user of luxeDB.initialUsers) {
+        const existing = await getUserByEmail(user.email);
+        if(!existing) await saveUserToDb(user);
     }
-
-    // Seed products if the products collection is completely empty
+    // Seed initial products
     const products = await getProductsFromDb();
     if (!products.length) {
-      for (const product of luxeDB.initialProducts) {
-        await addProductToDb(product);
-      }
-      console.log("Default products seeded.");
+      for (const product of luxeDB.initialProducts) await addProductToDb(product);
     }
-  } catch (error) {
-    console.error("Error seeding initial data:", error);
-  }
+  } catch (error) { console.error("Database seeding error:", error); }
 }

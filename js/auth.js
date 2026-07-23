@@ -1,94 +1,84 @@
 import { auth } from "../db/firebase.js";
-import { 
-    signInWithEmailAndPassword, 
-    createUserWithEmailAndPassword 
-} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import { getUserByEmail, saveUserToDb } from "../db/db.js";
+
+const adminEmails = ['jagannathmani4@gmail.com', 'sahebmani18@gmail.com'];
 
 // --- UI TOGGLE LOGIC ---
 const loginContainer = document.getElementById('login-container');
 const registerContainer = document.getElementById('register-container');
-const showRegisterBtn = document.getElementById('show-register');
-const showLoginBtn = document.getElementById('show-login');
+const adminPortalContainer = document.getElementById('admin-portal-container');
 
-if (showRegisterBtn && showLoginBtn) {
-    showRegisterBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        loginContainer.classList.add('d-none'); // Hide Login
-        registerContainer.classList.remove('d-none'); // Show Register
-    });
+document.getElementById('show-register')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    loginContainer.classList.add('d-none');
+    registerContainer.classList.remove('d-none');
+});
 
-    showLoginBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        registerContainer.classList.add('d-none'); // Hide Register
-        loginContainer.classList.remove('d-none'); // Show Login
-    });
-}
+document.getElementById('show-login')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    registerContainer.classList.add('d-none');
+    loginContainer.classList.remove('d-none');
+});
 
 // --- FIREBASE LOGIN LOGIC ---
-const loginForm = document.getElementById('login-form');
-if (loginForm) {
-    loginForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const email = document.getElementById('login-email').value;
-        const password = document.getElementById('login-password').value;
+document.getElementById('login-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
+    const submitBtn = e.target.querySelector('button');
+    
+    try {
+        submitBtn.innerHTML = 'Signing in...';
+        submitBtn.disabled = true;
         
-        try {
-            console.log("Attempting to log in...");
-            await signInWithEmailAndPassword(auth, email, password);
-            
-            const userDoc = await getUserByEmail(email);
-            const isAdmin = userDoc ? userDoc.isAdmin : false;
+        await signInWithEmailAndPassword(auth, email, password);
+        const userDoc = await getUserByEmail(email);
+        const isAdmin = userDoc ? userDoc.isAdmin : false;
 
-            localStorage.setItem('luxe_user', JSON.stringify({ email, isAdmin }));
-            window.location.replace(isAdmin ? 'admin.html' : 'index.html');
-        } catch (error) {
-            console.error("Login Error:", error.message);
-            alert(`Login Failed: ${error.message}`);
+        localStorage.setItem('luxe_user', JSON.stringify({ email, isAdmin }));
+        
+        if (isAdmin) {
+            loginContainer.classList.add('d-none');
+            adminPortalContainer.classList.remove('d-none');
+        } else {
+            window.location.replace('index.html');
         }
-    });
-}
+    } catch (error) {
+        alert(`Login Failed: Invalid credentials.`);
+        submitBtn.innerHTML = 'Sign In';
+        submitBtn.disabled = false;
+    }
+});
 
 // --- FIREBASE REGISTER LOGIC ---
-const registerForm = document.getElementById('register-form');
-if (registerForm) {
-    registerForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const name = document.getElementById('reg-name').value;
-        const email = document.getElementById('reg-email').value;
-        const password = document.getElementById('reg-password').value;
+document.getElementById('register-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('reg-name').value;
+    const email = document.getElementById('reg-email').value;
+    const password = document.getElementById('reg-password').value;
 
-        if (password.length < 6) {
-            alert("Password must be at least 6 characters long.");
-            return;
-        }
+    if (password.length < 6) return alert("Password must be at least 6 characters long.");
 
-        try {
-            console.log("Creating user in Firebase Auth...");
-            await createUserWithEmailAndPassword(auth, email, password);
+    try {
+        await createUserWithEmailAndPassword(auth, email, password);
+        
+        // Check if the registering email is in the admin array
+        const isAdmin = adminEmails.includes(email);
 
-            const isAdmin = (email === 'jagannathmani5@gmail.com' || email === 'sahebmani18@gmail.com');
+        await saveUserToDb({
+            email,
+            displayName: name,
+            isAdmin: isAdmin,
+            createdAt: new Date().toISOString()
+        });
 
-            const userProfile = {
-                email,
-                displayName: name,
-                isAdmin: isAdmin,
-                createdAt: new Date().toISOString()
-            };
-            
-            console.log("Saving user profile to database...");
-            await saveUserToDb(userProfile);
-
-            alert('Registration successful! You can now log in.');
-            
-            // Swap UI back to Login form instead of redirecting
-            registerForm.reset();
-            registerContainer.classList.add('d-none');
-            loginContainer.classList.remove('d-none');
-            
-        } catch (error) {
-            console.error("Registration Error:", error);
-            alert(`Registration Error: ${error.message}`);
-        }
-    });
-}
+        alert('Registration successful! You can now log in.');
+        document.getElementById('register-form').reset();
+        registerContainer.classList.add('d-none');
+        loginContainer.classList.remove('d-none');
+        
+    } catch (error) {
+        alert(`Registration Error: ${error.message}`);
+    }
+});

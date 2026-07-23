@@ -12,7 +12,7 @@
             <div class="col-md-6 col-lg-4">
                 <div class="card shadow-sm border-0 p-4 text-center">
                     
-                    <!-- ================= LOGIN FORM (Default) ================= -->
+                    <!-- ================= LOGIN FORM ================= -->
                     <div id="login-container">
                         <h2 class="fw-bold mb-4">Welcome Back</h2>
                         <form id="login-form">
@@ -27,7 +27,7 @@
                         <p class="mt-4 mb-0 text-muted">No account? <a href="#" id="show-register" class="text-dark fw-bold">Register</a></p>
                     </div>
 
-                    <!-- ================= REGISTER FORM (Hidden by default) ================= -->
+                    <!-- ================= REGISTER FORM ================= -->
                     <div id="register-container" class="d-none">
                         <h2 class="fw-bold mb-4">Create Account</h2>
                         <form id="register-form">
@@ -43,6 +43,14 @@
                             <button type="submit" class="btn btn-dark w-100 py-3 fw-bold">Register</button>
                         </form>
                         <p class="mt-4 mb-0 text-muted">Have an account? <a href="#" id="show-login" class="text-dark fw-bold">Sign In</a></p>
+                    </div>
+
+                    <!-- ================= ADMIN SUCCESS MENU ================= -->
+                    <div id="admin-portal-container" class="d-none">
+                        <h2 class="fw-bold mb-3">Login Successful!</h2>
+                        <p class="text-muted mb-4">Welcome back, Admin. Where would you like to go?</p>
+                        <a href="admin.html" class="btn btn-dark w-100 py-3 fw-bold mb-3">Manage Inventory</a>
+                        <a href="index.html" class="btn btn-outline-dark w-100 py-3 fw-bold">View as Customer</a>
                     </div>
 
                 </div>

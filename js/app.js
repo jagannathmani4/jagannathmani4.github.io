@@ -12,16 +12,23 @@ function renderProducts(products) {
     const grid = document.getElementById('product-grid');
     grid.innerHTML = ''; 
 
+    if(products.length === 0) {
+        grid.innerHTML = '<div class="col w-100 text-center text-muted">No products available at the moment.</div>';
+        return;
+    }
+
     products.forEach(product => {
-        // Bootstrap Card Structure
         const card = document.createElement('div');
         card.className = 'col';
         card.innerHTML = `
             <div class="card h-100 border-0 shadow-sm">
                 <img src="${product.image}" class="card-img-top" alt="${product.name}" style="height: 250px; object-fit: cover;">
                 <div class="card-body d-flex flex-column text-start">
-                    <h5 class="card-title fs-6 fw-bold mb-1">${product.name}</h5>
-                    <p class="card-text text-muted mb-3">$${product.price}</p>
+                    <h5 class="card-title fs-5 fw-bold mb-1">${product.name}</h5>
+                    <p class="card-text text-secondary small mb-2" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                        ${product.details || 'Premium fashion item.'}
+                    </p>
+                    <p class="card-text text-dark fw-bold fs-5 mb-3">$${product.price}</p>
                     <button class="btn btn-outline-dark mt-auto add-to-cart w-100 fw-bold" 
                         data-id="${product.id}" data-name="${product.name}" data-price="${product.price}" data-img="${product.image}">
                         🛒 Add to Cart
@@ -62,11 +69,22 @@ function updateCartCount() {
     document.getElementById('cart-count').innerText = count;
 }
 
+// --- UPDATED AUTH STATUS LOGIC ---
 function checkAuthStatus() {
     const user = JSON.parse(localStorage.getItem('luxe_user'));
+    const authLink = document.getElementById('auth-link');
+    
     if (user) {
-        document.getElementById('auth-link').innerText = '👤 Profile';
-        document.getElementById('auth-link').href = user.isAdmin ? 'admin.html' : '#';
+        if (user.isAdmin) {
+            authLink.innerText = '⚙️ Admin Panel';
+            authLink.href = 'admin.html';
+        } else {
+            authLink.innerText = '📦 My Orders';
+            authLink.href = 'orders.html';
+        }
+    } else {
+        authLink.innerText = '👤 Login';
+        authLink.href = 'login.html';
     }
 }
 
