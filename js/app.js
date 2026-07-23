@@ -1,11 +1,11 @@
 import { seedInitialData, getProductsFromDb } from "../db/db.js";
 
 async function initApp() {
-    // 1. ALWAYS check auth status immediately so the Navbar updates instantly
+    // ১. ডাটাবেস কলের আগেই অথেনটিকেশন চেক করুন!
     checkAuthStatus();
     updateCartCount();
 
-    // 2. Wrap database calls in a try-catch so it doesn't crash the page if it fails
+    // ২. ট্রাই-ক্যাচ (Try-Catch) ব্লক ব্যবহার করুন যাতে পেজ ক্র্যাশ না হয়
     try {
         await seedInitialData();
         const products = await getProductsFromDb();
@@ -15,7 +15,7 @@ async function initApp() {
         document.getElementById('product-grid').innerHTML = `
             <div class="col w-100 text-center">
                 <div class="alert alert-danger shadow-sm border-0 fw-bold">
-                    Could not load products. Please check your Firestore Database Rules.
+                    Could not load products. Please check your internet or database rules.
                 </div>
             </div>`;
     }

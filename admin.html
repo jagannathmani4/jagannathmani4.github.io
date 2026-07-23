@@ -41,11 +41,12 @@
                         <button class="btn btn-dark fw-bold" id="show-add-product-btn">+ Add Product</button>
                     </div>
 
+                    <!-- Add/Update Product Form -->
                     <div class="card border-0 shadow-sm mb-4 d-none" id="product-form-container">
                         <div class="card-body">
                             <h5 class="fw-bold mb-3" id="product-form-title">Add New Product</h5>
                             <form id="product-form">
-                                <input type="hidden" id="p-id">
+                                <input type="hidden" id="p-id" value="">
                                 <div class="row g-3">
                                     <div class="col-md-6"><input type="text" id="p-name" class="form-control" placeholder="Product Name" required></div>
                                     <div class="col-md-6"><input type="number" id="p-price" class="form-control" placeholder="Price ($)" step="0.01" required></div>
@@ -60,6 +61,7 @@
                         </div>
                     </div>
 
+                    <!-- Products Table -->
                     <div class="table-responsive bg-white rounded shadow-sm p-3">
                         <table class="table table-hover align-middle">
                             <thead class="table-light">
@@ -77,11 +79,12 @@
                         <button class="btn btn-dark fw-bold" id="show-add-retailer-btn">+ Add Retailer</button>
                     </div>
 
+                    <!-- Add/Update Retailer Form -->
                     <div class="card border-0 shadow-sm mb-4 d-none" id="retailer-form-container">
                         <div class="card-body">
                             <h5 class="fw-bold mb-3" id="retailer-form-title">Add New Retailer</h5>
                             <form id="retailer-form">
-                                <input type="hidden" id="r-id">
+                                <input type="hidden" id="r-id" value="">
                                 <div class="row g-3">
                                     <div class="col-md-4"><input type="text" id="r-name" class="form-control" placeholder="Retailer Name" required></div>
                                     <div class="col-md-4"><input type="email" id="r-contact" class="form-control" placeholder="Contact Email" required></div>
@@ -95,6 +98,7 @@
                         </div>
                     </div>
 
+                    <!-- Retailers Table -->
                     <div class="table-responsive bg-white rounded shadow-sm p-3">
                         <table class="table table-hover align-middle">
                             <thead class="table-light">

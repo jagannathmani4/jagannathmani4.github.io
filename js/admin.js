@@ -8,7 +8,9 @@ import { signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth
 
 // --- SECURITY & LOGOUT ---
 const user = JSON.parse(localStorage.getItem('luxe_user'));
-if (!user || !user.isAdmin) window.location.replace('login.html');
+if (!user || !user.isAdmin) {
+    window.location.replace('login.html');
+}
 
 document.getElementById('logout-btn')?.addEventListener('click', async (e) => {
     e.preventDefault();
@@ -31,11 +33,13 @@ document.getElementById('nav-products').addEventListener('click', () => {
     resetNav();
     document.getElementById('products-section').classList.remove('d-none');
     document.getElementById('nav-products').classList.add('bg-light');
+    loadProducts();
 });
 document.getElementById('nav-retailers').addEventListener('click', () => {
     resetNav();
     document.getElementById('retailers-section').classList.remove('d-none');
     document.getElementById('nav-retailers').classList.add('bg-light');
+    loadRetailers();
 });
 document.getElementById('nav-orders').addEventListener('click', () => {
     resetNav();
@@ -48,36 +52,49 @@ document.getElementById('nav-orders').addEventListener('click', () => {
 let productList = [];
 async function loadProducts() {
     const tbody = document.getElementById('admin-product-list');
-    tbody.innerHTML = '<tr><td colspan="5" class="text-center">Loading...</td></tr>';
-    productList = await getProductsFromDb();
-    tbody.innerHTML = '';
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-3">Loading...</td></tr>';
     
-    productList.forEach(p => {
-        tbody.innerHTML += `
-            <tr>
-                <td><img src="${p.image}" class="rounded shadow-sm" style="width: 50px; height: 50px; object-fit: cover;"></td>
-                <td class="fw-bold">${p.name}</td>
-                <td class="text-muted small" style="max-width: 200px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${p.details || 'No details'}</td>
-                <td class="text-muted">$${p.price}</td>
-                <td>
-                    <button class="btn btn-sm btn-primary fw-bold me-1" onclick="editProduct('${p.id}')">Edit</button>
-                    <button class="btn btn-sm btn-danger fw-bold" onclick="deleteProduct('${p.id}')">Delete</button>
-                </td>
-            </tr>`;
-    });
+    try {
+        productList = await getProductsFromDb();
+        tbody.innerHTML = '';
+        
+        if(productList.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">No products found.</td></tr>';
+            return;
+        }
+
+        productList.forEach(p => {
+            tbody.innerHTML += `
+                <tr>
+                    <td><img src="${p.image}" class="rounded shadow-sm" style="width: 50px; height: 50px; object-fit: cover;"></td>
+                    <td class="fw-bold">${p.name}</td>
+                    <td class="text-muted small" style="max-width: 200px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${p.details || 'No details'}</td>
+                    <td class="text-muted">$${p.price}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary fw-bold me-1" onclick="editProduct('${p.id}')">Edit</button>
+                        <button class="btn btn-sm btn-danger fw-bold" onclick="deleteProduct('${p.id}')">Delete</button>
+                    </td>
+                </tr>`;
+        });
+    } catch(err) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-3">Error loading products.</td></tr>';
+    }
 }
 
+// Show Product Form
 document.getElementById('show-add-product-btn').addEventListener('click', () => {
     document.getElementById('product-form').reset();
-    document.getElementById('p-id').value = '';
+    document.getElementById('p-id').value = ''; // Ensure ID is clear for new product
     document.getElementById('product-form-title').innerText = 'Add New Product';
     document.getElementById('product-form-container').classList.remove('d-none');
 });
+
+// Hide Product Form
 document.getElementById('cancel-product-btn').addEventListener('click', () => {
     document.getElementById('product-form-container').classList.add('d-none');
 });
 
-// ADD/UPDATE PRODUCT FORM (Updated with Fail-Safes)
+// Add or Update Product
 document.getElementById('product-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = e.target.querySelector('button[type="submit"]');
@@ -94,33 +111,42 @@ document.getElementById('product-form').addEventListener('submit', async (e) => 
         btn.innerText = "Saving...";
         btn.disabled = true;
 
-        if (id) await updateProductInDb(id, data);
-        else await addProductToDb(data);
+        if (id && id !== "") {
+            await updateProductInDb(id, data);
+            alert("Product updated successfully!");
+        } else {
+            await addProductToDb(data);
+            alert("Product added successfully!");
+        }
 
         document.getElementById('product-form-container').classList.add('d-none');
-        alert("Product saved successfully!");
         loadProducts(); // Refresh the table
     } catch (error) {
-        console.error("Product Save Error:", error);
-        alert("Failed to save product! Ensure your Firestore Database rules allow write access.");
+        alert("Failed to save product. Check database rules.");
     } finally {
         btn.innerText = "Save Product";
         btn.disabled = false;
     }
 });
 
+// Edit Product (Populate Form)
 window.editProduct = (id) => {
     const p = productList.find(item => item.id === id);
-    document.getElementById('p-id').value = p.id;
-    document.getElementById('p-name').value = p.name;
-    document.getElementById('p-price').value = p.price;
-    document.getElementById('p-image').value = p.image;
-    document.getElementById('p-details').value = p.details || '';
-    document.getElementById('product-form-title').innerText = 'Edit Product';
-    document.getElementById('product-form-container').classList.remove('d-none');
+    if(p) {
+        document.getElementById('p-id').value = p.id;
+        document.getElementById('p-name').value = p.name;
+        document.getElementById('p-price').value = p.price;
+        document.getElementById('p-image').value = p.image;
+        document.getElementById('p-details').value = p.details || '';
+        document.getElementById('product-form-title').innerText = 'Edit Product';
+        document.getElementById('product-form-container').classList.remove('d-none');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
 };
+
+// Delete Product
 window.deleteProduct = async (id) => {
-    if (confirm("Delete this product?")) { 
+    if (confirm("Are you sure you want to delete this product?")) { 
         try {
             await deleteProductFromDb(id); 
             loadProducts(); 
@@ -134,7 +160,7 @@ window.deleteProduct = async (id) => {
 let retailerList = [];
 async function loadRetailers() {
     const tbody = document.getElementById('admin-retailer-list');
-    tbody.innerHTML = '<tr><td colspan="4" class="text-center">Loading...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4" class="text-center py-3">Loading...</td></tr>';
     retailerList = await getRetailersFromDb();
     tbody.innerHTML = '';
     
@@ -171,7 +197,7 @@ document.getElementById('retailer-form').addEventListener('submit', async (e) =>
         location: document.getElementById('r-location').value
     };
     try {
-        if (id) await updateRetailerInDb(id, data);
+        if (id && id !== "") await updateRetailerInDb(id, data);
         else await addRetailerToDb(data);
         document.getElementById('retailer-form-container').classList.add('d-none');
         loadRetailers();
@@ -182,12 +208,14 @@ document.getElementById('retailer-form').addEventListener('submit', async (e) =>
 
 window.editRetailer = (id) => {
     const r = retailerList.find(item => item.id === id);
-    document.getElementById('r-id').value = r.id;
-    document.getElementById('r-name').value = r.name;
-    document.getElementById('r-contact').value = r.contact;
-    document.getElementById('r-location').value = r.location;
-    document.getElementById('retailer-form-title').innerText = 'Edit Retailer';
-    document.getElementById('retailer-form-container').classList.remove('d-none');
+    if(r) {
+        document.getElementById('r-id').value = r.id;
+        document.getElementById('r-name').value = r.name;
+        document.getElementById('r-contact').value = r.contact;
+        document.getElementById('r-location').value = r.location;
+        document.getElementById('retailer-form-title').innerText = 'Edit Retailer';
+        document.getElementById('retailer-form-container').classList.remove('d-none');
+    }
 };
 window.deleteRetailer = async (id) => {
     if (confirm("Delete this retailer?")) { await deleteRetailerFromDb(id); loadRetailers(); }
@@ -196,14 +224,14 @@ window.deleteRetailer = async (id) => {
 // ================= ORDERS LOGIC =================
 async function loadOrders() {
     const tbody = document.getElementById('admin-orders-list');
-    tbody.innerHTML = '<tr><td colspan="5" class="text-center">Loading...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-3">Loading...</td></tr>';
     
     try {
         const orders = await getOrdersFromDb();
         tbody.innerHTML = '';
         
         if (orders.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No orders found.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">No orders found.</td></tr>';
             return;
         }
 
@@ -226,7 +254,7 @@ async function loadOrders() {
                 </tr>`;
         });
     } catch(error) {
-        tbody.innerHTML = '<tr><td colspan="5" class="text-danger text-center">Failed to load orders.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="text-danger text-center py-3">Failed to load orders.</td></tr>';
     }
 }
 
@@ -244,5 +272,4 @@ window.changeOrderStatus = async (id, newStatus) => {
 // --- INITIALIZE ---
 document.addEventListener('DOMContentLoaded', () => {
     loadProducts();
-    loadRetailers();
 });
