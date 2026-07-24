@@ -93,13 +93,10 @@ async function checkAuthStatus() {
         if (logoutBtn) logoutBtn.classList.remove('d-none');
         if (greeting) greeting.classList.remove('d-none');
         
-        // Fetch User Name to display in the Navbar
         try {
             const userData = await getUserByEmail(user.email);
             if (greeting) greeting.innerText = `Hi, ${userData?.displayName || 'User'}!`;
-        } catch(e) {
-            console.error("Failed to fetch user name:", e);
-        }
+        } catch(e) {}
 
         if (user.isAdmin) {
             if (authLink) {

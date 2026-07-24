@@ -2,7 +2,7 @@ import {
     getProductsFromDb, addProductToDb, updateProductInDb, deleteProductFromDb,
     getRetailersFromDb, addRetailerToDb, updateRetailerInDb, deleteRetailerFromDb,
     getOrdersFromDb, updateOrderStatusInDb, getStoreSettings, saveStoreSettings,
-    getUserByEmail // Imported to fetch the admin's name
+    getUserByEmail
 } from "../db/db.js";
 import { auth } from "../db/firebase.js";
 import { signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
@@ -12,7 +12,6 @@ const user = JSON.parse(localStorage.getItem('luxe_user'));
 if (!user || !user.isAdmin) {
     window.location.replace('login.html');
 } else {
-    // Fetch and display Admin Name in Navbar
     getUserByEmail(user.email).then(userData => {
         document.getElementById('admin-user-name').innerText = `👤 ${userData?.displayName || 'Admin'}`;
     });
@@ -231,47 +230,98 @@ window.deleteRetailer = async (id) => {
     if (confirm("Delete this retailer?")) { await deleteRetailerFromDb(id); loadRetailers(); }
 };
 
-// ================= ORDERS LOGIC =================
+// ================= ORDERS LOGIC (MODAL) =================
+let globalOrderList = []; 
+let orderDetailsModal = null; 
+
 async function loadOrders() {
     const tbody = document.getElementById('admin-orders-list');
-    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4">Loading...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4">Loading...</td></tr>';
     
     try {
-        const orders = await getOrdersFromDb();
+        globalOrderList = await getOrdersFromDb();
         tbody.innerHTML = '';
         
-        if (orders.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">No orders found.</td></tr>';
+        if (globalOrderList.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">No orders found.</td></tr>';
             return;
         }
 
-        orders.forEach(order => {
-            let itemsHtml = order.items.map(i => `${i.name} (x${i.quantity})`).join('<br>');
-            let statusClass = order.status === 'Pending' ? 'text-warning' : (order.status === 'Confirmed' ? 'text-success' : 'text-danger');
+        globalOrderList.forEach(order => {
+            let productNames = order.items.map(i => `${i.name} (x${i.quantity})`).join(', ');
+            if(productNames.length > 40) productNames = productNames.substring(0, 37) + '...';
             
+            let statusBadgeClass = order.status === 'Pending' ? 'bg-warning text-dark' : (order.status === 'Confirmed' ? 'bg-success' : 'bg-danger');
+
             tbody.innerHTML += `
                 <tr>
-                    <td class="fw-bold">${order.userEmail}</td>
-                    <td class="small text-muted">${itemsHtml}</td>
-                    <td class="fw-bold">₹${parseFloat(order.total).toFixed(2)}</td>
-                    <td class="fw-bold ${statusClass}">${order.status}</td>
+                    <td class="fw-bold">${productNames} <br><span class="badge ${statusBadgeClass} mt-1">${order.status}</span></td>
+                    <td class="fw-bold text-primary">${order.deliveryPin || 'N/A'}</td>
+                    <td class="fw-bold text-secondary">${order.utrNumber || 'N/A'}</td>
                     <td>
-                        ${order.status === 'Pending' ? `
-                            <button class="btn btn-sm btn-success fw-bold me-1" onclick="changeOrderStatus('${order.id}', 'Confirmed')">Accept</button>
-                            <button class="btn btn-sm btn-danger fw-bold" onclick="changeOrderStatus('${order.id}', 'Rejected')">Reject</button>
-                        ` : '<span class="text-muted small">Processed</span>'}
+                        <button class="btn btn-sm btn-dark fw-bold" onclick="viewOrderDetails('${order.id}')">View Details</button>
                     </td>
                 </tr>`;
         });
     } catch(error) {
-        tbody.innerHTML = '<tr><td colspan="5" class="text-danger text-center py-4">Failed to load orders.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" class="text-danger text-center py-4">Failed to load orders.</td></tr>';
     }
 }
 
+window.viewOrderDetails = (orderId) => {
+    const order = globalOrderList.find(o => o.id === orderId);
+    if(!order) return;
+
+    const modalBody = document.getElementById('order-modal-body');
+    const modalFooter = document.getElementById('order-modal-footer');
+
+    let itemsHtml = order.items.map(i => `<li>${i.name} (x${i.quantity}) - ₹${(i.price * i.quantity).toFixed(2)}</li>`).join('');
+
+    modalBody.innerHTML = `
+        <div class="mb-3">
+            <p class="mb-1 text-muted small">Customer Email:</p>
+            <h6 class="fw-bold">${order.userEmail}</h6>
+        </div>
+        <div class="mb-3">
+            <p class="mb-1 text-muted small">Full Delivery Address:</p>
+            <h6 class="fw-bold">${order.deliveryAddress || 'N/A'}</h6>
+            <span class="badge bg-primary">PIN: ${order.deliveryPin || 'N/A'}</span>
+        </div>
+        <div class="mb-3">
+            <p class="mb-1 text-muted small">Payment UTR Number:</p>
+            <h6 class="fw-bold text-success">${order.utrNumber || 'N/A'}</h6>
+        </div>
+        <hr>
+        <div class="mb-3">
+            <p class="fw-bold mb-2">Order Items:</p>
+            <ul class="text-muted small">${itemsHtml}</ul>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <h5 class="fw-bold mb-0">Total:</h5>
+            <h5 class="fw-bold text-dark mb-0">₹${parseFloat(order.total).toFixed(2)}</h5>
+        </div>
+    `;
+
+    if (order.status === 'Pending') {
+        modalFooter.innerHTML = `
+            <button class="btn btn-danger fw-bold flex-grow-1" onclick="changeOrderStatus('${order.id}', 'Rejected')">Decline</button>
+            <button class="btn btn-success fw-bold flex-grow-1" onclick="changeOrderStatus('${order.id}', 'Confirmed')">Confirm Order</button>
+        `;
+    } else {
+        modalFooter.innerHTML = `<span class="text-muted fw-bold w-100 text-center">Order is ${order.status}</span>`;
+    }
+
+    if (!orderDetailsModal) {
+        orderDetailsModal = new bootstrap.Modal(document.getElementById('orderModal'));
+    }
+    orderDetailsModal.show();
+};
+
 window.changeOrderStatus = async (id, newStatus) => {
-    if(confirm(`Mark this order as ${newStatus}?`)) {
+    if(confirm(`Are you sure you want to ${newStatus === 'Confirmed' ? 'Confirm' : 'Decline'} this order?`)) {
         try {
             await updateOrderStatusInDb(id, newStatus);
+            if (orderDetailsModal) orderDetailsModal.hide(); 
             loadOrders(); 
         } catch(e) { alert("Failed to update status."); }
     }

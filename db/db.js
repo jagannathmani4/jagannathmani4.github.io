@@ -40,14 +40,30 @@ export async function updateRetailerInDb(id, updates) { await updateDoc(doc(reta
 export async function deleteRetailerFromDb(id) { await deleteDoc(doc(retailersCollection, id)); }
 
 // --- ORDERS ---
-export async function getOrdersFromDb() { return await fetchCollection(ordersCollection); }
-export async function getUserOrdersFromDb(email) {
-    const q = query(ordersCollection, where('userEmail', '==', email), orderBy('createdAt', 'desc'));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
+export async function getOrdersFromDb() { 
+    // Fetch all orders without filtering, so Firebase doesn't hide legacy orders
+    const snapshot = await getDocs(ordersCollection);
+    const orders = snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
+    
+    // Sort them manually in the browser instead
+    return orders.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
 }
-export async function addOrderToDb(order) { await addDoc(ordersCollection, { ...order, status: 'Pending', createdAt: new Date().toISOString() }); }
-export async function updateOrderStatusInDb(orderId, status) { await updateDoc(doc(ordersCollection, orderId), { status, updatedAt: new Date().toISOString() }); }
+
+export async function getUserOrdersFromDb(email) {
+    const q = query(ordersCollection, where('userEmail', '==', email));
+    const snapshot = await getDocs(q);
+    const orders = snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
+    
+    // Sort them manually in the browser
+    return orders.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+}
+
+export async function addOrderToDb(order) { 
+    await addDoc(ordersCollection, { ...order, status: 'Pending', createdAt: new Date().toISOString() }); 
+}
+export async function updateOrderStatusInDb(orderId, status) { 
+    await updateDoc(doc(ordersCollection, orderId), { status, updatedAt: new Date().toISOString() }); 
+}
 
 // --- WEB SETTINGS ---
 export async function getStoreSettings() {
