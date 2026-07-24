@@ -1,15 +1,21 @@
 import { 
     getProductsFromDb, addProductToDb, updateProductInDb, deleteProductFromDb,
     getRetailersFromDb, addRetailerToDb, updateRetailerInDb, deleteRetailerFromDb,
-    getOrdersFromDb, updateOrderStatusInDb, getStoreSettings, saveStoreSettings
+    getOrdersFromDb, updateOrderStatusInDb, getStoreSettings, saveStoreSettings,
+    getUserByEmail // Imported to fetch the admin's name
 } from "../db/db.js";
 import { auth } from "../db/firebase.js";
 import { signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
-// --- SECURITY & LOGOUT ---
+// --- SECURITY & ADMIN INFO ---
 const user = JSON.parse(localStorage.getItem('luxe_user'));
 if (!user || !user.isAdmin) {
     window.location.replace('login.html');
+} else {
+    // Fetch and display Admin Name in Navbar
+    getUserByEmail(user.email).then(userData => {
+        document.getElementById('admin-user-name').innerText = `👤 ${userData?.displayName || 'Admin'}`;
+    });
 }
 
 document.getElementById('logout-btn')?.addEventListener('click', async (e) => {
@@ -19,16 +25,17 @@ document.getElementById('logout-btn')?.addEventListener('click', async (e) => {
     window.location.replace('login.html');
 });
 
-// --- NAVIGATION TOGGLE ---
+// --- DROPDOWN NAVIGATION LOGIC ---
 function resetNav() {
-    ['nav-products', 'nav-retailers', 'nav-orders', 'nav-settings'].forEach(id => document.getElementById(id).classList.remove('bg-light'));
-    ['products-section', 'retailers-section', 'orders-section', 'settings-section'].forEach(id => document.getElementById(id).classList.add('d-none'));
+    ['products-section', 'retailers-section', 'orders-section', 'settings-section'].forEach(id => {
+        document.getElementById(id).classList.add('d-none');
+    });
 }
 
-document.getElementById('nav-products').addEventListener('click', () => { resetNav(); document.getElementById('products-section').classList.remove('d-none'); document.getElementById('nav-products').classList.add('bg-light'); loadProducts(); });
-document.getElementById('nav-retailers').addEventListener('click', () => { resetNav(); document.getElementById('retailers-section').classList.remove('d-none'); document.getElementById('nav-retailers').classList.add('bg-light'); loadRetailers(); });
-document.getElementById('nav-orders').addEventListener('click', () => { resetNav(); document.getElementById('orders-section').classList.remove('d-none'); document.getElementById('nav-orders').classList.add('bg-light'); loadOrders(); });
-document.getElementById('nav-settings').addEventListener('click', () => { resetNav(); document.getElementById('settings-section').classList.remove('d-none'); document.getElementById('nav-settings').classList.add('bg-light'); loadSettings(); });
+document.getElementById('nav-products').addEventListener('click', (e) => { e.preventDefault(); resetNav(); document.getElementById('products-section').classList.remove('d-none'); loadProducts(); });
+document.getElementById('nav-retailers').addEventListener('click', (e) => { e.preventDefault(); resetNav(); document.getElementById('retailers-section').classList.remove('d-none'); loadRetailers(); });
+document.getElementById('nav-orders').addEventListener('click', (e) => { e.preventDefault(); resetNav(); document.getElementById('orders-section').classList.remove('d-none'); loadOrders(); });
+document.getElementById('nav-settings').addEventListener('click', (e) => { e.preventDefault(); resetNav(); document.getElementById('settings-section').classList.remove('d-none'); loadSettings(); });
 
 
 // ================= WEB SETTINGS LOGIC =================
@@ -64,14 +71,14 @@ document.getElementById('settings-form')?.addEventListener('submit', async (e) =
 let productList = [];
 async function loadProducts() {
     const tbody = document.getElementById('admin-product-list');
-    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-3">Loading...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4">Loading...</td></tr>';
     
     try {
         productList = await getProductsFromDb();
         tbody.innerHTML = '';
         
         if(productList.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">No products found.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">No products found.</td></tr>';
             return;
         }
 
@@ -89,7 +96,7 @@ async function loadProducts() {
                 </tr>`;
         });
     } catch(err) {
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-3">Error loading products.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-4">Error loading products.</td></tr>';
     }
 }
 
@@ -165,7 +172,7 @@ window.deleteProduct = async (id) => {
 let retailerList = [];
 async function loadRetailers() {
     const tbody = document.getElementById('admin-retailer-list');
-    tbody.innerHTML = '<tr><td colspan="4" class="text-center py-3">Loading...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4">Loading...</td></tr>';
     retailerList = await getRetailersFromDb();
     tbody.innerHTML = '';
     
@@ -227,14 +234,14 @@ window.deleteRetailer = async (id) => {
 // ================= ORDERS LOGIC =================
 async function loadOrders() {
     const tbody = document.getElementById('admin-orders-list');
-    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-3">Loading...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4">Loading...</td></tr>';
     
     try {
         const orders = await getOrdersFromDb();
         tbody.innerHTML = '';
         
         if (orders.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">No orders found.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">No orders found.</td></tr>';
             return;
         }
 
@@ -257,7 +264,7 @@ async function loadOrders() {
                 </tr>`;
         });
     } catch(error) {
-        tbody.innerHTML = '<tr><td colspan="5" class="text-danger text-center py-3">Failed to load orders.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="text-danger text-center py-4">Failed to load orders.</td></tr>';
     }
 }
 

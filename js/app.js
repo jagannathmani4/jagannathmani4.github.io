@@ -1,4 +1,4 @@
-import { seedInitialData, getProductsFromDb, getStoreSettings } from "../db/db.js";
+import { seedInitialData, getProductsFromDb, getStoreSettings, getUserByEmail } from "../db/db.js";
 import { auth } from "../db/firebase.js";
 import { signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
@@ -7,6 +7,7 @@ async function initApp() {
     updateCartCount();
 
     try {
+        // Fetch dynamic settings for the logo
         const settings = await getStoreSettings();
         document.querySelectorAll('.dynamic-logo').forEach(el => {
             el.innerHTML = `${settings.logoText}<span>FASHION</span>`;
@@ -24,6 +25,7 @@ async function initApp() {
 function renderProducts(products) {
     const grid = document.getElementById('product-grid');
     grid.innerHTML = ''; 
+    
     if(products.length === 0) {
         grid.innerHTML = '<div class="col w-100 text-center text-muted">No products available at the moment.</div>';
         return;
@@ -55,12 +57,22 @@ function renderProducts(products) {
 
 function addToCart(e) {
     const item = {
-        id: e.target.dataset.id, name: e.target.dataset.name,
-        price: parseFloat(e.target.dataset.price), image: e.target.dataset.img, quantity: 1
+        id: e.target.dataset.id, 
+        name: e.target.dataset.name,
+        price: parseFloat(e.target.dataset.price), 
+        image: e.target.dataset.img, 
+        quantity: 1
     };
+    
     let cart = JSON.parse(localStorage.getItem('luxe_cart')) || [];
     const existing = cart.find(i => i.id === item.id);
-    if (existing) { existing.quantity += 1; } else { cart.push(item); }
+    
+    if (existing) { 
+        existing.quantity += 1; 
+    } else { 
+        cart.push(item); 
+    }
+    
     localStorage.setItem('luxe_cart', JSON.stringify(cart));
     updateCartCount();
     alert(`${item.name} added to cart!`);
@@ -71,24 +83,42 @@ function updateCartCount() {
     document.getElementById('cart-count').innerText = cart.reduce((sum, item) => sum + item.quantity, 0);
 }
 
-function checkAuthStatus() {
+async function checkAuthStatus() {
     const user = JSON.parse(localStorage.getItem('luxe_user'));
     const authLink = document.getElementById('auth-link');
     const logoutBtn = document.getElementById('store-logout-btn');
+    const greeting = document.getElementById('user-greeting');
     
     if (user) {
-        logoutBtn.classList.remove('d-none');
+        if (logoutBtn) logoutBtn.classList.remove('d-none');
+        if (greeting) greeting.classList.remove('d-none');
+        
+        // Fetch User Name to display in the Navbar
+        try {
+            const userData = await getUserByEmail(user.email);
+            if (greeting) greeting.innerText = `Hi, ${userData?.displayName || 'User'}!`;
+        } catch(e) {
+            console.error("Failed to fetch user name:", e);
+        }
+
         if (user.isAdmin) {
-            authLink.innerText = '⚙️ Admin Panel';
-            authLink.href = 'admin.html';
+            if (authLink) {
+                authLink.innerText = '📦 Inventory';
+                authLink.href = 'admin.html';
+            }
         } else {
-            authLink.innerText = '📦 My Orders';
-            authLink.href = 'orders.html';
+            if (authLink) {
+                authLink.innerText = '📦 My Orders';
+                authLink.href = 'orders.html';
+            }
         }
     } else {
-        authLink.innerText = '👤 Login';
-        authLink.href = 'login.html';
-        logoutBtn.classList.add('d-none');
+        if (authLink) {
+            authLink.innerText = '👤 Login';
+            authLink.href = 'login.html';
+        }
+        if (logoutBtn) logoutBtn.classList.add('d-none');
+        if (greeting) greeting.classList.add('d-none');
     }
 }
 
