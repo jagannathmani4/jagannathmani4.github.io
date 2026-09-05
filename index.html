@@ -23,35 +23,23 @@
 				<a class="active" href="#top">Celebration</a>
 				<a href="#work">My offerings</a>
 				<a href="#about">Learning notes</a>
+				<a href="#skills">Skills</a>
 				<a href="#contact">Contact</a>
 			</nav>
 		</aside>
 		<main class="content" id="top">
-			<header class="mobile-header"><div class="mobile-identity"><img class="mobile-avatar" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=160&amp;q=85" alt="Jagannath Mani"><span>Jagannath Mani</span></div><button id="menuOpen" aria-label="Open menu"><span></span><span></span></button></header>
+			<header class="mobile-header"><div class="mobile-identity"><img class="mobile-avatar" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=160&amp;q=85" alt="Jagannath Mani"><span>Jagannath Mani</span></div><nav class="top-nav" aria-label="Top navigation"><a href="#top">Celebration</a><a href="#work">My offerings</a><a href="#about">Learning notes</a><a href="#contact">Contact</a></nav><button id="menuOpen" aria-label="Open menu"><span></span><span></span><span></span></button></header>
 			<section class="intro section-pad">
-				<div class="eyebrow"><span class="eyebrow-line"></span> Festive spirit of 2026 — Janmashtami ~ Teachers’ Day</div>
-				<div class="video-controls">
-					<button class="video-sound-toggle" type="button" aria-label="Mute video" aria-pressed="false">
-						<span class="sound-icon" aria-hidden="true">🔊</span>
-						<span class="sound-text">Sound on</span>
-					</button>
-				</div>
-				<video class="janmashtami-video" autoplay loop playsinline preload="auto" disablepictureinpicture aria-hidden="true">
-					<source src="assets/event media/janmasthami/video.mp4" type="video/mp4">
-				</video>
+				<div class="eyebrow"><span class="eyebrow-line"></span> Festive spirit of 2026 — Teachers’ Day</div>
 				<div class="celebration-banner">
-					<div class="krishna-panel" data-celebration="janmashtami">
-						<div class="panel-topline"><span>Janmashtami</span><span>Bhakti · Joy · Wisdom</span></div>
-						<p class="panel-message">On this Janmashtami, let’s celebrate the divine lessons of Krishna and embrace peace, happiness, and harmony.</p>
-						<div class="krishna-art" aria-hidden="true"><span class="feather feather-one"></span><span class="feather feather-two"></span><span class="flute"></span><span class="butter-pot"></span><span class="lotus lotus-one"></span><span class="lotus lotus-two"></span></div>
-						<div class="panel-copy"><p class="kicker">The little flute player</p><h2>Where joy<br>becomes <em>guidance.</em></h2><p>Celebrating Krishna’s curious spirit, playful heart, and the wisdom that lights every path.</p></div>
-					</div>
 					<div class="teacher-panel" data-celebration="teachers-day">
 						<div class="panel-topline"><span>Teachers’ Day</span><span>Gratitude · Guidance</span></div>
 						<p class="panel-message">On Teachers’ Day, we honor those who inspire, guide, and illuminate our path with wisdom.</p>
+						<div class="teacher-badge" aria-label="Teacher's Day celebration badge"><span>✦</span> 5 SEPTEMBER <span>✦</span></div>
+						<div class="teacher-illustration" aria-hidden="true"><span class="teacher-head"></span><span class="teacher-body"></span><span class="student student-one"></span><span class="student student-two"></span><span class="open-book"></span></div>
 						<div class="chalkboard"><span class="chalk-sun">✦</span><span class="chalk-line">A good teacher</span><span class="chalk-line chalk-accent">opens a world.</span><span class="chalk-doodle">∿ ∿ ∿</span></div>
 						<div class="teacher-icons" aria-hidden="true"><span class="book-icon">▱</span><span class="pen-icon">╱</span><span class="bulb-icon">✦</span></div>
-						<div class="panel-copy"><p class="kicker">A note of gratitude</p><h2>For every<br><em>mind awakened.</em></h2><p>To the teachers who turn questions into confidence and classrooms into constellations.</p></div>
+						<div class="panel-copy"><p class="kicker">A note of gratitude</p><h2>Happy<br><em>Teacher’s Day.</em></h2><p>Thank You for Inspiring Minds and Shaping Futures</p></div>
 					</div>
 				</div>
 				<div class="celebration-note"><span>With reverence and wonder</span><strong>Honouring the hands that teach, and the hearts that learn.</strong><a class="text-link" href="#work">Explore my work <span>↗</span></a></div>
@@ -59,9 +47,10 @@
 				<div class="row hero-meta"><div class="col-md-4"><span class="meta-label">Currently</span><strong>BCA in Machine Learning</strong><small>Building a sharper foundation</small></div><div class="col-md-4"><span class="meta-label">Inspired by</span><strong>Teachers &amp; mentors</strong><small>Learning with a grateful heart</small></div><div class="col-md-4"><span class="meta-label">Knowledge</span><strong>Web + AI</strong><small>Data Analysis &amp; Visualization</small></div></div>
 			</section>
 			<section class="work section-pad" id="work"><div class="section-heading"><div><h3>Selected work</h3></div><span class="section-caption">Ideas, shipped with intention</span></div><div class="project-grid" id="projectGrid"></div></section>
-			<section class="about section-pad" id="about"><div class="section-heading"><div><h3>A little about me</h3></div></div><div class="row g-5 align-items-start"><div class="col-lg-7"><p class="about-lead">I’m studying BCA in Machine Learning and enjoy the space where thoughtful design meets solid engineering.</p><p class="about-copy">I have knowledge in Web + AI, Data Analysis, and Data Visualization. I like understanding problems deeply and building useful, practical tools that make information easier to understand.</p></div><div class="col-lg-5"><div class="skill-list" id="skillList"></div></div></div></section>
+			<section class="about section-pad" id="about"><div class="section-heading"><div><h3>A little about me</h3></div></div><div class="row g-5 align-items-start"><div class="col-lg-7"><p class="about-lead">I’m studying BCA in Machine Learning and enjoy the space where thoughtful design meets solid engineering.</p><p class="about-copy">I have knowledge in Web + AI, Data Analysis, and Data Visualization. I like understanding problems deeply and building useful, practical tools that make information easier to understand.</p></div><div class="col-lg-5"><span id="skills" class="skills-anchor" aria-hidden="true"></span><div class="skill-list" id="skillList"></div></div></div></section>
+			<section class="appreciation section-pad" id="appreciation"><div class="section-heading"><div><span class="section-index">A small thank you</span><h3>Lessons that stay<br>with us.</h3></div><span class="section-caption">Words for the guides who make learning matter</span></div><div class="quote-grid"><article class="quote-card"><span class="quote-mark">“</span><p>A teacher affects eternity; they can never tell where their influence stops.</p><footer>— Henry Adams</footer></article><article class="quote-card quote-card-featured"><span class="ribbon">With gratitude</span><span class="quote-mark">“</span><p>The art of teaching is the art of assisting discovery.</p><footer>— Mark Van Doren</footer></article><article class="gratitude-card"><span class="card-icon" aria-hidden="true">✦</span><h4>For every question welcomed.</h4><p>For the patience, courage, and quiet encouragement that help a learner find their own way.</p></article></div></section>
 			<section class="contact section-pad" id="contact"><div class="contact-box"><span class="section-index">Get in touch</span><h3>Have a good problem<br>to solve?</h3><a class="contact-email" href="mailto:jagannathmani4@gmail.com">jagannathmani4@gmail.com <span>↗</span></a><div class="socials"><a href="https://github.com/jagannathmani4" target="_blank" rel="noreferrer">GitHub</a><a href="https://www.linkedin.com/in/jagannath-mani-820583378/" target="_blank" rel="noreferrer">LinkedIn</a></div></div></section>
-			<footer class="content-foot"><div class="footer-contact"><a href="mailto:jagannathmani4@gmail.com">jagannathmani4@gmail.com</a><span>© <span id="year"></span></span></div><span>Designed &amp; developed by Jagannath Mani</span><a href="#top">Back to top ↑</a></footer>
+			<footer class="content-foot"><div class="footer-contact"><a href="mailto:jagannathmani4@gmail.com">jagannathmani4@gmail.com</a><span>© <span id="year"></span></span></div><span>Celebrating the educators who make a difference every day.</span><a href="#top">Back to top ↑</a></footer>
 		</main>
 	</div>
 	<script type="module" src="assets/js/site.js"></script>
