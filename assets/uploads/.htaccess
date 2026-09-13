@@ -1,0 +1,4 @@
+# Uploaded files are user/admin-supplied — never execute anything as PHP here.
+<FilesMatch "\.(php|phtml|php3|php4|php5|php7|phar)$">
+    Require all denied
+</FilesMatch>

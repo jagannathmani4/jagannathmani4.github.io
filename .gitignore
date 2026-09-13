@@ -1,6 +1,17 @@
-.env
-.env.*
-!.env.example
-.vscode/
+# Environment / local overrides
+config/config.local.php
+
+# Uploaded user content (keep folder structure, ignore contents)
+assets/uploads/projects/*
+!assets/uploads/projects/.gitkeep
+assets/uploads/notes/*
+!assets/uploads/notes/.gitkeep
+
+# OS / editor junk
 .DS_Store
 Thumbs.db
+.vscode/
+.idea/
+
+# Logs
+*.log
