@@ -20,7 +20,7 @@ include __DIR__ . '/includes/navbar.php';
       <?php foreach ($projects as $p): ?>
         <div class="col-md-6 col-lg-4">
           <div class="card-surface project-card h-100 d-flex flex-column">
-            <img src="<?= $p['image'] ? clean(PROJECT_UPLOAD_URL . $p['image']) : 'https://placehold.co/500x300/161d2e/5ee6c4?text=Project' ?>" alt="<?= clean($p['title']) ?>">
+            <img src="<?= $p['image'] ? clean(resolve_upload_url($p['image'], PROJECT_UPLOAD_URL)) : 'https://placehold.co/500x300/161d2e/5ee6c4?text=Project' ?>" alt="<?= clean($p['title']) ?>">
             <div class="card-body d-flex flex-column flex-grow-1">
               <h5 class="mb-2"><?= clean($p['title']) ?></h5>
               <p class="text-secondary small mb-3 flex-grow-1"><?= clean(mb_strimwidth($p['description'], 0, 110, '...')) ?></p>

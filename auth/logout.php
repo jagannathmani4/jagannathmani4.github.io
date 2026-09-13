@@ -6,4 +6,4 @@ session_destroy();
 
 session_start();
 set_flash('success', 'You have been logged out.');
-redirect(url('index.html'));
+redirect(url('index.php'));

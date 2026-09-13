@@ -37,11 +37,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($title === '') $errors[] = 'Title is required.';
         if ($content === '') $errors[] = 'Content is required.';
 
-        $fileName = null;
-        try {
-            $fileName = handle_upload($_FILES['attachment'] ?? [], NOTE_UPLOAD_DIR, ['pdf', 'doc', 'docx', 'txt', 'zip', 'jpg', 'png']);
-        } catch (RuntimeException $e) {
-            $errors[] = $e->getMessage();
+        $fileName = trim($_POST['attachment_url'] ?? '');
+        if ($fileName === '' && !empty($_FILES['attachment']['name'])) {
+            try {
+                $fileName = handle_upload($_FILES['attachment'] ?? [], NOTE_UPLOAD_DIR, ['pdf', 'doc', 'docx', 'txt', 'zip', 'jpg', 'png']);
+            } catch (RuntimeException $e) {
+                $errors[] = $e->getMessage();
+            }
         }
 
         if (!$errors) {
@@ -50,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $old = $pdo->prepare('SELECT file_path FROM notes WHERE id = ?');
                     $old->execute([$id]);
                     $oldFile = $old->fetchColumn();
-                    if ($oldFile && file_exists(NOTE_UPLOAD_DIR . $oldFile)) unlink(NOTE_UPLOAD_DIR . $oldFile);
+                    if ($oldFile && !is_remote_asset_url($oldFile) && file_exists(NOTE_UPLOAD_DIR . $oldFile)) unlink(NOTE_UPLOAD_DIR . $oldFile);
 
                     $stmt = $pdo->prepare('UPDATE notes SET title=?, category=?, content=?, is_public=?, file_path=? WHERE id=?');
                     $stmt->execute([$title, $category, $content, $isPublic, $fileName, $id]);
@@ -88,6 +90,7 @@ include __DIR__ . '/includes/admin-header.php';
       <form method="post" enctype="multipart/form-data">
         <?= csrf_field() ?>
         <input type="hidden" name="id" value="<?= (int)($editing['id'] ?? 0) ?>">
+        <input type="hidden" name="attachment_url" id="note-attachment-url" value="<?= clean($editing['file_path'] ?? '') ?>">
         <div class="mb-3">
           <label class="form-label">Title</label>
           <input type="text" name="title" class="form-control" value="<?= clean($editing['title'] ?? '') ?>" required>
@@ -102,7 +105,8 @@ include __DIR__ . '/includes/admin-header.php';
         </div>
         <div class="mb-3">
           <label class="form-label">Attachment (optional)</label>
-          <input type="file" name="attachment" class="form-control">
+          <input type="file" name="attachment" class="form-control" data-firebase-upload data-storage-provider="supabase" data-firebase-folder="notes" data-firebase-target="note-attachment-url">
+          <div class="form-text text-secondary firebase-upload-status">Choose a file to upload it to Supabase Storage.</div>
           <?php if (!empty($editing['file_path'])): ?>
             <div class="form-text text-secondary">Current: <?= clean($editing['file_path']) ?></div>
           <?php endif; ?>

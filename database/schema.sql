@@ -1,6 +1,10 @@
 -- =====================================================================
 -- Portfolio Website Database Schema
 -- Import this file into MySQL before running the application.
+-- Recommended storage split:
+--   - Firebase: user login/auth data
+--   - Supabase: project, notes, media and other content records
+--   - MySQL: legacy/local fallback and app schema compatibility
 -- Example: mysql -u root -p your_db_name < database/schema.sql
 -- =====================================================================
 

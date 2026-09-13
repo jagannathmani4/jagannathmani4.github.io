@@ -21,7 +21,7 @@ include __DIR__ . '/includes/navbar.php';
     <a href="<?= url('projects.php') ?>" class="small text-secondary"><i class="bi bi-arrow-left me-1"></i>Back to projects</a>
 
     <div class="card-surface mt-3 overflow-hidden">
-      <img src="<?= $project['image'] ? clean(PROJECT_UPLOAD_URL . $project['image']) : 'https://placehold.co/900x400/161d2e/5ee6c4?text=Project' ?>" alt="<?= clean($project['title']) ?>" class="w-100" style="max-height: 420px; object-fit: cover;">
+      <img src="<?= $project['image'] ? clean(resolve_upload_url($project['image'], PROJECT_UPLOAD_URL)) : 'https://placehold.co/900x400/161d2e/5ee6c4?text=Project' ?>" alt="<?= clean($project['title']) ?>" class="w-100" style="max-height: 420px; object-fit: cover;">
       <div class="p-4 p-md-5">
         <h2 class="mb-3"><?= clean($project['title']) ?></h2>
         <div class="mb-4">

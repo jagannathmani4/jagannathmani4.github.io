@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../config/db.php';
 
 if (is_logged_in()) {
-    redirect(url('index.html'));
+    redirect(url('index.php'));
 }
 
 $errors = [];
@@ -31,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'role'  => $user['role'],
             ];
             set_flash('success', 'Welcome back, ' . $user['name'] . '!');
-            redirect($user['role'] === 'admin' ? url('admin/index.php') : url('index.html'));
+            redirect($user['role'] === 'admin' ? url('admin/index.php') : url('index.php'));
         }
     }
 }

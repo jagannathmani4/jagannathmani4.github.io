@@ -41,11 +41,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($title === '') $errors[] = 'Title is required.';
         if ($description === '') $errors[] = 'Description is required.';
 
-        $imageName = null;
-        try {
-            $imageName = handle_upload($_FILES['image'] ?? [], PROJECT_UPLOAD_DIR, ['jpg', 'jpeg', 'png', 'webp', 'gif']);
-        } catch (RuntimeException $e) {
-            $errors[] = $e->getMessage();
+        $imageName = trim($_POST['image_url'] ?? '');
+        if ($imageName === '' && !empty($_FILES['image']['name'])) {
+            try {
+                $imageName = handle_upload($_FILES['image'] ?? [], PROJECT_UPLOAD_DIR, ['jpg', 'jpeg', 'png', 'webp', 'gif']);
+            } catch (RuntimeException $e) {
+                $errors[] = $e->getMessage();
+            }
         }
 
         if (!$errors) {
@@ -55,7 +57,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $old = $pdo->prepare('SELECT image FROM projects WHERE id = ?');
                     $old->execute([$id]);
                     $oldImg = $old->fetchColumn();
-                    if ($oldImg && file_exists(PROJECT_UPLOAD_DIR . $oldImg)) unlink(PROJECT_UPLOAD_DIR . $oldImg);
+                    if ($oldImg && !is_remote_asset_url($oldImg) && file_exists(PROJECT_UPLOAD_DIR . $oldImg)) {
+                        unlink(PROJECT_UPLOAD_DIR . $oldImg);
+                    }
 
                     $stmt = $pdo->prepare('UPDATE projects SET title=?, description=?, tech_stack=?, github_url=?, live_url=?, featured=?, image=? WHERE id=?');
                     $stmt->execute([$title, $description, $techStack, $githubUrl, $liveUrl, $featured, $imageName, $id]);
@@ -94,6 +98,7 @@ include __DIR__ . '/includes/admin-header.php';
       <form method="post" enctype="multipart/form-data">
         <?= csrf_field() ?>
         <input type="hidden" name="id" value="<?= (int)($editing['id'] ?? 0) ?>">
+        <input type="hidden" name="image_url" id="project-image-url" value="<?= clean($editing['image'] ?? '') ?>">
         <div class="mb-3">
           <label class="form-label">Title</label>
           <input type="text" name="title" class="form-control" value="<?= clean($editing['title'] ?? '') ?>" required>
@@ -116,7 +121,8 @@ include __DIR__ . '/includes/admin-header.php';
         </div>
         <div class="mb-3">
           <label class="form-label">Project image</label>
-          <input type="file" name="image" class="form-control" accept=".jpg,.jpeg,.png,.webp,.gif">
+          <input type="file" name="image" class="form-control" accept=".jpg,.jpeg,.png,.webp,.gif" data-firebase-upload data-storage-provider="supabase" data-firebase-folder="projects" data-firebase-target="project-image-url">
+          <div class="form-text text-secondary firebase-upload-status">Choose a file to upload it to Supabase Storage.</div>
           <?php if (!empty($editing['image'])): ?>
             <div class="form-text text-secondary">Current: <?= clean($editing['image']) ?> (uploading a new one will replace it)</div>
           <?php endif; ?>

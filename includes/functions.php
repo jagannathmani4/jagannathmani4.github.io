@@ -36,7 +36,9 @@ function seed_default_admin(PDO $pdo): void
 function seed_default_settings(PDO $pdo): void
 {
     $keys = [
-        'active_backend',        // 'mysql' | 'supabase' | 'firebase'
+        'active_backend',        // legacy fallback: 'mysql' | 'supabase' | 'firebase'
+        'user_login_backend',   // 'firebase' | 'mysql'
+        'content_backend',      // 'supabase' | 'mysql'
         'supabase_url',
         'supabase_anon_key',
         'supabase_service_key',
@@ -46,6 +48,7 @@ function seed_default_settings(PDO $pdo): void
         'firebase_storage_bucket',
         'firebase_messaging_sender_id',
         'firebase_app_id',
+        'project_db_code',      // Optional project-specific DB/client config snippet (e.g. Firebase init code)
     ];
 
     $check  = $pdo->prepare('SELECT id FROM settings WHERE setting_key = ? LIMIT 1');
@@ -85,6 +88,28 @@ function url(string $path = ''): string
 function asset(string $path): string
 {
     return url($path);
+}
+
+function is_remote_asset_url(?string $value): bool
+{
+    if ($value === null || $value === '') {
+        return false;
+    }
+
+    return (bool) preg_match('/^(https?:\/\/|data:|gs:\/\/)/i', $value);
+}
+
+function resolve_upload_url(?string $value, string $basePath): string
+{
+    if (empty($value)) {
+        return '';
+    }
+
+    if (is_remote_asset_url($value)) {
+        return $value;
+    }
+
+    return rtrim($basePath, '/') . '/' . ltrim($value, '/');
 }
 
 // ---------------------------------------------------------------------
@@ -195,6 +220,30 @@ function get_all_settings(PDO $pdo): array
         $out[$row['setting_key']] = $row['setting_value'];
     }
     return $out;
+}
+
+/**
+ * Returns the configured backend split for the app.
+ * Firebase is intended for user login data, while Supabase handles project/notes/content records.
+ */
+function get_backend_config(PDO $pdo): array
+{
+    $settings = get_all_settings($pdo);
+
+    $userLogin = strtolower((string)($settings['user_login_backend'] ?? $settings['active_backend'] ?? 'firebase'));
+    $content = strtolower((string)($settings['content_backend'] ?? $settings['active_backend'] ?? 'supabase'));
+
+    if (!in_array($userLogin, ['firebase', 'mysql'], true)) {
+        $userLogin = 'firebase';
+    }
+    if (!in_array($content, ['supabase', 'mysql'], true)) {
+        $content = 'supabase';
+    }
+
+    return [
+        'user_login_backend' => $userLogin,
+        'content_backend' => $content,
+    ];
 }
 
 // ---------------------------------------------------------------------

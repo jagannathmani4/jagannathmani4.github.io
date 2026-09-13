@@ -65,7 +65,7 @@ include __DIR__ . '/../includes/header.php';
       <button type="submit" class="btn btn-accent w-100">Log in as Admin</button>
     </form>
     <p class="text-center text-secondary small mt-4 mb-0">
-      <a href="<?= url('index.html') ?>"><i class="bi bi-arrow-left me-1"></i>Back to site</a>
+      <a href="<?= url('index.php') ?>"><i class="bi bi-arrow-left me-1"></i>Back to site</a>
     </p>
   </div>
 </div>

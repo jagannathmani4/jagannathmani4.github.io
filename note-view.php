@@ -31,7 +31,7 @@ include __DIR__ . '/includes/navbar.php';
       <div style="white-space: pre-line;"><?= clean($note['content']) ?></div>
 
       <?php if (!empty($note['file_path'])): ?>
-        <a href="<?= clean(NOTE_UPLOAD_URL . $note['file_path']) ?>" download class="btn btn-outline-accent mt-4">
+        <a href="<?= clean(resolve_upload_url($note['file_path'], NOTE_UPLOAD_URL)) ?>" class="btn btn-outline-accent mt-4">
           <i class="bi bi-download me-2"></i>Download attachment
         </a>
       <?php endif; ?>

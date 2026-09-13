@@ -11,6 +11,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $fields = [
             'active_backend',
+            'user_login_backend',
+            'content_backend',
             'supabase_url',
             'supabase_anon_key',
             'supabase_service_key',
@@ -20,6 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'firebase_storage_bucket',
             'firebase_messaging_sender_id',
             'firebase_app_id',
+            'project_db_code',
         ];
         foreach ($fields as $field) {
             set_setting($pdo, $field, trim($_POST[$field] ?? ''));
@@ -53,13 +56,27 @@ include __DIR__ . '/includes/admin-header.php';
   <?= csrf_field() ?>
 
   <div class="card-surface p-4 mb-4">
-    <h6 class="mb-3">Active Backend</h6>
-    <p class="text-secondary small">Choose which backend the site should treat as primary for future integrations. This app's core data (users, projects, notes, messages) runs on MySQL regardless — this setting is for any additional Supabase/Firebase-powered features you build on top.</p>
-    <select name="active_backend" class="form-select" style="max-width: 300px;">
-      <?php foreach (['mysql' => 'MySQL (default)', 'supabase' => 'Supabase', 'firebase' => 'Firebase'] as $val => $label): ?>
-        <option value="<?= $val ?>" <?= ($settings['active_backend'] ?? 'mysql') === $val ? 'selected' : '' ?>><?= $label ?></option>
-      <?php endforeach; ?>
-    </select>
+    <h6 class="mb-3">Backend Split</h6>
+    <p class="text-secondary small">Use Firebase only for user login/auth data and Supabase for project, notes, media, and other site records. MySQL remains available as a fallback for legacy/local compatibility.</p>
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">User login data</label>
+        <select name="user_login_backend" class="form-select">
+          <?php foreach (['firebase' => 'Firebase', 'mysql' => 'MySQL'] as $val => $label): ?>
+            <option value="<?= $val ?>" <?= strtolower((string)($settings['user_login_backend'] ?? 'firebase')) === $val ? 'selected' : '' ?>><?= $label ?></option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Content / records storage</label>
+        <select name="content_backend" class="form-select">
+          <?php foreach (['supabase' => 'Supabase', 'mysql' => 'MySQL'] as $val => $label): ?>
+            <option value="<?= $val ?>" <?= strtolower((string)($settings['content_backend'] ?? 'supabase')) === $val ? 'selected' : '' ?>><?= $label ?></option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+    </div>
+    <input type="hidden" name="active_backend" value="<?= clean($settings['active_backend'] ?? 'mysql') ?>">
   </div>
 
   <div class="card-surface p-4 mb-4">
@@ -108,6 +125,40 @@ include __DIR__ . '/includes/admin-header.php';
         <input type="text" name="firebase_app_id" class="form-control" value="<?= clean($settings['firebase_app_id'] ?? '') ?>">
       </div>
     </div>
+  </div>
+
+  <div class="card-surface p-4 mb-4">
+    <h6 class="mb-3"><i class="bi bi-database me-2"></i>Project Database Code</h6>
+    <p class="text-secondary small mb-3">Keep a flexible spot here for project-specific database/client setup code, such as Firebase initialization.</p>
+    <textarea name="project_db_code" class="form-control font-monospace" rows="18" placeholder="// Import the functions you need from the SDKs you need
+import { initializeApp } from \"firebase/app\";
+
+const firebaseConfig = {
+  apiKey: \"...\",
+  authDomain: \"...\",
+  projectId: \"...\",
+  storageBucket: \"...\",
+  messagingSenderId: \"...\",
+  appId: \"...\"
+};
+
+const app = initializeApp(firebaseConfig);"><?= clean($settings['project_db_code'] ?? "// Import the functions you need from the SDKs you need
+import { initializeApp } from \"firebase/app\";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: \"AIzaSyDXRq_Wfs2mlvxdLkmh2t3PokZ5n03Vc-I\",
+  authDomain: \"portfolio-web-bd546.firebaseapp.com\",
+  projectId: \"portfolio-web-bd546\",
+  storageBucket: \"portfolio-web-bd546.firebasestorage.app\",
+  messagingSenderId: \"1093729951257\",
+  appId: \"1:1093729951257:web:6f9f5665273c01e2285488\"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);") ?></textarea>
   </div>
 
   <button type="submit" class="btn btn-accent px-4">Save Settings</button>
