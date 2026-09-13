@@ -47,7 +47,7 @@ include __DIR__ . '/includes/admin-header.php';
             <p class="text-secondary small mb-2"><?= clean($m['email']) ?></p>
             <p style="white-space: pre-line;"><?= clean($m['message']) ?></p>
             <div class="d-flex gap-2 mt-3">
-              <a href="mailto:<?= clean($m['email']) ?>?subject=Re: <?= urlencode($m['subject']) ?>" class="btn btn-sm btn-accent">Reply via Email</a>
+              <a href="mailto:<?= clean($m['email']) ?>?subject=Re: <?= urlencode($m['subject'] ?? '') ?>" class="btn btn-sm btn-accent">Reply via Email</a>
               <a href="<?= url('admin/manage-messages.php?mark_read=' . $m['id']) ?>" class="btn btn-sm btn-outline-accent">Mark Read</a>
               <a href="<?= url('admin/manage-messages.php?mark_replied=' . $m['id']) ?>" class="btn btn-sm btn-outline-accent">Mark Replied</a>
               <a href="<?= url('admin/manage-messages.php?delete=' . $m['id']) ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this message?');">Delete</a>

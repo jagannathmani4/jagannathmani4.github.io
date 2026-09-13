@@ -67,9 +67,9 @@ function seed_default_settings(PDO $pdo): void
 // Sanitization / helpers
 // ---------------------------------------------------------------------
 
-function clean(string $value): string
+function clean(?string $value): string
 {
-    return htmlspecialchars(trim($value), ENT_QUOTES, 'UTF-8');
+    return htmlspecialchars(trim($value ?? ''), ENT_QUOTES, 'UTF-8');
 }
 
 function redirect(string $path): void

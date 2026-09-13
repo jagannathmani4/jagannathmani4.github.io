@@ -8,7 +8,7 @@ if (isset($_GET['delete'])) {
     $stmt = $pdo->prepare('SELECT file_path FROM notes WHERE id = ?');
     $stmt->execute([(int)$_GET['delete']]);
     if ($row = $stmt->fetch()) {
-        if ($row['file_path'] && file_exists(NOTE_UPLOAD_DIR . $row['file_path'])) {
+        if ($row['file_path'] && !is_remote_asset_url($row['file_path']) && file_exists(NOTE_UPLOAD_DIR . $row['file_path'])) {
             unlink(NOTE_UPLOAD_DIR . $row['file_path']);
         }
         $pdo->prepare('DELETE FROM notes WHERE id = ?')->execute([(int)$_GET['delete']]);

@@ -9,7 +9,7 @@ if (isset($_GET['delete'])) {
     $stmt = $pdo->prepare('SELECT image FROM projects WHERE id = ?');
     $stmt->execute([(int)$_GET['delete']]);
     if ($row = $stmt->fetch()) {
-        if ($row['image'] && file_exists(PROJECT_UPLOAD_DIR . $row['image'])) {
+        if ($row['image'] && !is_remote_asset_url($row['image']) && file_exists(PROJECT_UPLOAD_DIR . $row['image'])) {
             unlink(PROJECT_UPLOAD_DIR . $row['image']);
         }
         $pdo->prepare('DELETE FROM projects WHERE id = ?')->execute([(int)$_GET['delete']]);
