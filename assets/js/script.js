@@ -11,6 +11,7 @@ document.querySelectorAll('[data-toggle-password]').forEach(function (btn) {
 });
 
 // Prevent forced file downloads from route buttons and redirect normally instead.
+// This keeps file links working as page navigation instead of browser download actions.
 document.addEventListener('click', function (event) {
   var link = event.target.closest('a[href]');
   if (!link) return;

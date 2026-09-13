@@ -31,6 +31,7 @@ include __DIR__ . '/includes/navbar.php';
       <div style="white-space: pre-line;"><?= clean($note['content']) ?></div>
 
       <?php if (!empty($note['file_path'])): ?>
+        <!-- Keep attachment links as navigation/open-in-tab actions instead of forcing browser download. -->
         <a href="<?= clean(resolve_upload_url($note['file_path'], NOTE_UPLOAD_URL)) ?>"
            class="btn btn-outline-accent mt-4"
            data-prevent-download="true"
