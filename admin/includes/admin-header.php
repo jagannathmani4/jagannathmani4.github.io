@@ -27,7 +27,7 @@ $activePage = $activePage ?? '';
       <li class="nav-item"><a class="nav-link <?= $activePage === 'messages' ? 'active' : '' ?>" href="<?= url('admin/manage-messages.php') ?>"><i class="bi bi-envelope me-2"></i>Messages</a></li>
       <li class="nav-item"><a class="nav-link <?= $activePage === 'users' ? 'active' : '' ?>" href="<?= url('admin/manage-users.php') ?>"><i class="bi bi-people me-2"></i>Users</a></li>
       <li class="nav-item"><a class="nav-link <?= $activePage === 'settings' ? 'active' : '' ?>" href="<?= url('admin/api-settings.php') ?>"><i class="bi bi-key me-2"></i>API Settings</a></li>
-      <li class="nav-item mt-4"><a class="nav-link" href="<?= url('index.php') ?>"><i class="bi bi-globe me-2"></i>View Site</a></li>
+      <li class="nav-item mt-4"><a class="nav-link" href="<?= url('index.html') ?>"><i class="bi bi-globe me-2"></i>View Site</a></li>
       <li class="nav-item"><a class="nav-link text-danger" href="<?= url('admin/logout.php') ?>"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
     </ul>
   </nav>

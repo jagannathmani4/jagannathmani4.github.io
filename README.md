@@ -32,10 +32,17 @@ portfolio-website/
 ├── config/                # config.php (edit this!), db.php
 ├── database/schema.sql    # Import this into MySQL
 ├── includes/              # Shared header/navbar/footer + functions.php
-├── index.php, projects.php, project-details.php,
+├── index.html, projects.php, project-details.php,
 │   notes.php, note-view.php, contact.php, profile.php
 └── README.md
 ```
+
+> **Note:** `index.html` is a **static** landing page (no PHP needed to render it), so the
+> homepage still displays even on hosts that can't execute PHP. Every other page
+> — Projects, Notes, Contact, Profile, Auth, and the entire Admin Panel — is PHP + MySQL
+> and requires a real PHP host to function. If you deploy only `index.html` to a static
+> host like GitHub Pages, links to `projects.php`, `auth/login.php`, etc. will not work
+> there; point those at your PHP-hosted deployment, or deploy the whole project to a PHP host.
 
 ## Setup
 

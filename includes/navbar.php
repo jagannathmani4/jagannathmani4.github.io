@@ -1,6 +1,6 @@
 <nav class="navbar navbar-expand-lg navbar-dark site-navbar sticky-top">
   <div class="container">
-    <a class="navbar-brand fw-bold" href="<?= url('index.php') ?>">
+    <a class="navbar-brand fw-bold" href="<?= url('index.html') ?>">
       <span class="brand-accent">&lt;</span>Jagannath<span class="brand-accent">/&gt;</span>
     </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
@@ -8,7 +8,7 @@
     </button>
     <div class="collapse navbar-collapse" id="mainNav">
       <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
-        <li class="nav-item"><a class="nav-link" href="<?= url('index.php') ?>#about">About</a></li>
+        <li class="nav-item"><a class="nav-link" href="<?= url('index.html') ?>#about">About</a></li>
         <li class="nav-item"><a class="nav-link" href="<?= url('projects.php') ?>">Projects</a></li>
         <li class="nav-item"><a class="nav-link" href="<?= url('notes.php') ?>">Notes</a></li>
         <li class="nav-item"><a class="nav-link" href="<?= url('contact.php') ?>">Contact</a></li>
