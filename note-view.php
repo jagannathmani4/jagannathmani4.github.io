@@ -31,12 +31,12 @@ include __DIR__ . '/includes/navbar.php';
       <div style="white-space: pre-line;"><?= clean($note['content']) ?></div>
 
       <?php if (!empty($note['file_path'])): ?>
-        <!-- Keep attachment links as navigation/open-in-tab actions instead of forcing browser download. -->
         <a href="<?= clean(resolve_upload_url($note['file_path'], NOTE_UPLOAD_URL)) ?>"
            class="btn btn-outline-accent mt-4"
            data-prevent-download="true"
            target="_blank"
-           rel="noopener noreferrer">
+           rel="noopener noreferrer"
+           onclick="event.preventDefault(); window.open(this.href, '_blank', 'noopener,noreferrer'); return false;">
           <i class="bi bi-box-arrow-up-right me-2"></i>Open attachment
         </a>
       <?php endif; ?>
