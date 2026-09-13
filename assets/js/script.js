@@ -10,6 +10,29 @@ document.querySelectorAll('[data-toggle-password]').forEach(function (btn) {
   });
 });
 
+// Prevent forced file downloads from route buttons and redirect normally instead.
+document.addEventListener('click', function (event) {
+  var link = event.target.closest('a[href]');
+  if (!link) return;
+
+  var href = link.getAttribute('href');
+  if (!href || href === '#') return;
+
+  var shouldBlockDownload = link.hasAttribute('download') || link.dataset.preventDownload === 'true';
+  if (!shouldBlockDownload) return;
+
+  event.preventDefault();
+
+  var isLikelyFile = /\.(pdf|zip|doc|docx|txt|jpg|jpeg|png|gif|webp|mp3|mp4|mov|avi|wav)(\?.*)?$/i.test(href);
+
+  if (isLikelyFile) {
+    window.open(href, '_blank', 'noopener');
+    return;
+  }
+
+  window.location.href = href;
+});
+
 // Auto-dismiss flash alerts after 5s
 document.querySelectorAll('.alert').forEach(function (alertEl) {
   setTimeout(function () {

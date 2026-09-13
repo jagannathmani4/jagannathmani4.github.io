@@ -31,8 +31,12 @@ include __DIR__ . '/includes/navbar.php';
       <div style="white-space: pre-line;"><?= clean($note['content']) ?></div>
 
       <?php if (!empty($note['file_path'])): ?>
-        <a href="<?= clean(resolve_upload_url($note['file_path'], NOTE_UPLOAD_URL)) ?>" class="btn btn-outline-accent mt-4">
-          <i class="bi bi-download me-2"></i>Download attachment
+        <a href="<?= clean(resolve_upload_url($note['file_path'], NOTE_UPLOAD_URL)) ?>"
+           class="btn btn-outline-accent mt-4"
+           data-prevent-download="true"
+           target="_blank"
+           rel="noopener noreferrer">
+          <i class="bi bi-box-arrow-up-right me-2"></i>Open attachment
         </a>
       <?php endif; ?>
     </div>
